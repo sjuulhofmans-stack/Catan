@@ -11,6 +11,8 @@
 
 * { box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   height: 100%;
@@ -138,6 +140,147 @@ h2 { margin: 0; font-size: 5vmin; font-weight: 600; }
 
 .lobby-status { margin: 0; min-height: 3vmin; font-size: 2.6vmin; color: var(--accent); }
 
+/* ---------- Instellingen ---------- */
+#screen-settings {
+  gap: 3vmin;
+  justify-content: safe center;
+  overflow-y: auto;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2vmin;
+  width: min(110vmin, 94vw);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2vmin;
+  font-size: 2.4vmin;
+}
+
+.setting-label { min-width: 26vmin; color: var(--muted); }
+
+.segmented {
+  display: flex;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 1vmin;
+  overflow: hidden;
+}
+
+.segmented button {
+  font-size: 2.4vmin;
+  padding: 1vmin 3.2vmin;
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.segmented button:last-child { border-right: none; }
+.segmented button.selected { background: var(--accent); color: #1a1a1a; font-weight: 600; }
+
+.seat-map {
+  display: grid;
+  grid-template-columns: 1fr 16vmin 1fr;
+  grid-template-areas:
+    "tl board tr"
+    "bl board br";
+  gap: 2vmin;
+}
+
+.seat[data-seat="tl"] { grid-area: tl; }
+.seat[data-seat="tr"] { grid-area: tr; }
+.seat[data-seat="bl"] { grid-area: bl; }
+.seat[data-seat="br"] { grid-area: br; }
+
+.seat-board {
+  grid-area: board;
+  display: grid;
+  place-items: center;
+  font-size: 2vmin;
+  color: var(--muted);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 2vmin;
+}
+
+.seat {
+  min-height: 17vmin;
+  padding: 1.8vmin;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2vmin;
+  border: 0.4vmin solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5vmin;
+  transition: border-color 0.3s, opacity 0.3s;
+}
+
+.seat.active { border-color: var(--seat-color); background: rgba(255, 255, 255, 0.03); }
+.seat:not(.active) { opacity: 0.55; }
+
+.seat-head { display: flex; justify-content: space-between; align-items: center; gap: 1vmin; }
+.seat-pos { font-size: 1.9vmin; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.seat-action {
+  font-size: 1.8vmin;
+  padding: 0.6vmin 1.4vmin;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.8vmin;
+}
+
+.seat-action:hover { border-color: var(--accent); }
+
+.seat-name {
+  font: inherit;
+  font-size: 2.6vmin;
+  padding: 1vmin 1.4vmin;
+  color: var(--text);
+  background: #151917;
+  border: 1px solid #333;
+  border-radius: 0.8vmin;
+}
+
+.seat-name:focus { outline: none; border-color: var(--seat-color); }
+
+.swatches { display: flex; gap: 1.4vmin; }
+
+.swatch {
+  width: 4.6vmin;
+  height: 4.6vmin;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--c);
+}
+
+.swatch.selected { box-shadow: 0 0 0 0.4vmin #000, 0 0 0 0.8vmin var(--c); }
+
+.seat-empty { margin: auto; font-size: 2.2vmin; color: var(--muted); }
+
+.hint { margin: 0; min-height: 2.4vmin; font-size: 2vmin; color: var(--muted); }
+
+.toggle { display: flex; align-items: center; gap: 1vmin; cursor: pointer; }
+.toggle input { width: 2.6vmin; height: 2.6vmin; accent-color: var(--accent); }
+
+.settings select {
+  font: inherit;
+  font-size: 2.2vmin;
+  padding: 0.8vmin 1.2vmin;
+  color: var(--text);
+  background: #151917;
+  border: 1px solid #333;
+  border-radius: 0.8vmin;
+}
+
+.settings select:disabled { opacity: 0.4; }
+
+.settings input[type="range"] { width: 40vmin; accent-color: var(--accent); }
+
+#target-points-value { min-width: 6vmin; font-size: 3vmin; font-weight: 700; color: var(--accent); }
+
 /* ---------- Bord ---------- */
 #table { transition-duration: 1s; }
 
@@ -220,10 +363,13 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
   flex: 1;
   border-radius: 1vmin;
   border: 0.2vmin dashed rgba(255, 255, 255, 0.2);
-  display: grid;
-  place-items: center;
-  font-size: 1.6vmin;
-  opacity: 0.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6vmin;
+  font-size: 1.8vmin;
+  opacity: 0.8;
 }
 
 /* ---------- Zijmenu (links) ---------- */

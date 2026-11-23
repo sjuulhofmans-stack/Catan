@@ -1,11 +1,4 @@
-// Opstart van de bordpagina: menu -> lobby -> spel.
-const PLAYERS = [
-  { name: "Speler 1", color: "#e63946" },
-  { name: "Speler 2", color: "#457bff" },
-  { name: "Speler 3", color: "#f4a261" },
-  { name: "Speler 4", color: "#2a9d8f" },
-];
-
+// Opstart van de bordpagina: menu -> instellingen -> lobby -> spel.
 const $ = (id) => document.getElementById(id);
 
 // ---------- Bord (wordt meteen getekend, maar blijft verborgen tot de start) ----------
@@ -13,17 +6,35 @@ const model = Board.createModel({ radius: 2, size: 1 });
 Board.render($("board"), model);
 window.board = model; // handig om in de console te bekijken
 
-document.querySelectorAll(".player-panel").forEach((panel) => {
-  const player = PLAYERS[Number(panel.dataset.player)];
-  panel.style.setProperty("--player-color", player.color);
-  panel.innerHTML = `
-    <div class="player-name">${player.name}</div>
-    <div class="player-body">grondstoffen / punten</div>
-  `;
-});
+// ---------- Spelinstellingen ----------
+let gameConfig = null;
+
+function formatTime(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+// Spelersvakken vullen; hoeken zonder speler worden verborgen
+function applyConfig(config) {
+  gameConfig = config;
+  window.gameConfig = config; // handig in de console
+  document.querySelectorAll(".player-panel").forEach((panel) => {
+    const player = config.players.find((p) => p.seat === panel.dataset.seat);
+    panel.hidden = !player;
+    if (!player) return;
+    panel.style.setProperty("--player-color", player.color);
+    panel.innerHTML = `
+      <div class="player-name"></div>
+      <div class="player-body">
+        <span class="player-points">0 / ${config.targetPoints} punten</span>
+        ${config.timer.enabled ? `<span class="player-timer">⏱ ${formatTime(config.timer.seconds)}</span>` : ""}
+      </div>
+    `;
+    panel.querySelector(".player-name").textContent = player.name;
+  });
+}
 
 // ---------- Schermen ----------
-const screens = { menu: $("screen-menu"), lobby: $("screen-lobby") };
+const screens = { menu: $("screen-menu"), settings: $("screen-settings"), lobby: $("screen-lobby") };
 
 function showScreen(name) {
   for (const [key, el] of Object.entries(screens)) el.classList.toggle("hidden", key !== name);
@@ -46,8 +57,26 @@ function startGame() {
 }
 
 // ---------- Menu ----------
-$("btn-new").addEventListener("click", openLobby);
-$("btn-solo").addEventListener("click", startGame);
+let withPhones = true;
+
+function openSettings(phones) {
+  withPhones = phones;
+  $("btn-settings-next").textContent = phones ? "Verder naar lobby" : "Start spel";
+  Settings.render();
+  showScreen("settings");
+}
+
+$("btn-new").addEventListener("click", () => openSettings(true));
+$("btn-solo").addEventListener("click", () => openSettings(false));
+
+// ---------- Instellingen ----------
+Settings.mount();
+$("btn-settings-back").addEventListener("click", () => showScreen("menu"));
+$("btn-settings-next").addEventListener("click", () => {
+  applyConfig(Settings.getConfig());
+  if (withPhones) openLobby();
+  else startGame();
+});
 
 // ---------- Lobby ----------
 function openLobby() {
@@ -99,7 +128,7 @@ $("btn-start").addEventListener("click", startGame);
 $("btn-back").addEventListener("click", () => {
   clearTimeout(autoStartTimer);
   Lobby.close();
-  showScreen("menu");
+  showScreen("settings");
 });
 
 // ---------- Berichten van telefoons ----------
@@ -139,6 +168,7 @@ const toggleDebug = () => document.body.classList.toggle("show-debug");
 $("btn-debug").addEventListener("click", toggleDebug);
 
 document.addEventListener("keydown", (e) => {
+  if (e.target.closest("input, select, textarea")) return; // niet tijdens typen (bijv. een naam met een f)
   if (e.key === "f" || e.key === "F") toggleFullscreen();
   if (e.key === "d" || e.key === "D") toggleDebug();
 });

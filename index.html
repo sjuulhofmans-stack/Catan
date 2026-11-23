@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hexbord</title>
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
   <!-- Startmenu -->
@@ -14,6 +14,55 @@
       <button id="btn-new" type="button">Nieuw spel</button>
       <button id="btn-solo" type="button" class="secondary">Bord zonder telefoons</button>
       <button type="button" class="secondary btn-fullscreen">Fullscreen</button>
+    </div>
+  </section>
+
+  <!-- Instellingen -->
+  <section id="screen-settings" class="screen hidden">
+    <h2>Instellingen</h2>
+    <div class="settings">
+      <div class="setting-row">
+        <span class="setting-label">Aantal spelers</span>
+        <div id="player-count" class="segmented">
+          <button type="button" data-count="2">2</button>
+          <button type="button" data-count="3">3</button>
+          <button type="button" data-count="4">4</button>
+        </div>
+      </div>
+
+      <div id="seat-map" class="seat-map">
+        <div class="seat" data-seat="tl"></div>
+        <div class="seat" data-seat="tr"></div>
+        <div class="seat-board">bord</div>
+        <div class="seat" data-seat="bl"></div>
+        <div class="seat" data-seat="br"></div>
+      </div>
+      <p id="seat-hint" class="hint"></p>
+
+      <div class="setting-row">
+        <span class="setting-label">Timer per beurt</span>
+        <label class="toggle"><input id="timer-on" type="checkbox"> Met timer</label>
+        <select id="timer-seconds">
+          <option value="30">0:30</option>
+          <option value="45">0:45</option>
+          <option value="60">1:00</option>
+          <option value="90">1:30</option>
+          <option value="120">2:00</option>
+          <option value="180">3:00</option>
+          <option value="240">4:00</option>
+          <option value="300">5:00</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Punten om te winnen</span>
+        <input id="target-points" type="range" min="10" max="30" step="1">
+        <output id="target-points-value" for="target-points"></output>
+      </div>
+    </div>
+    <div class="menu row">
+      <button id="btn-settings-back" type="button" class="secondary">Terug</button>
+      <button id="btn-settings-next" type="button">Verder naar lobby</button>
     </div>
   </section>
 
@@ -42,10 +91,10 @@
   <main id="table" class="hidden">
     <svg id="board" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
 
-    <section class="player-panel corner-tl" data-player="0"></section>
-    <section class="player-panel corner-tr" data-player="1"></section>
-    <section class="player-panel corner-bl" data-player="2"></section>
-    <section class="player-panel corner-br" data-player="3"></section>
+    <section class="player-panel corner-tl" data-seat="tl"></section>
+    <section class="player-panel corner-tr" data-seat="tr"></section>
+    <section class="player-panel corner-bl" data-seat="bl"></section>
+    <section class="player-panel corner-br" data-seat="br"></section>
 
     <!-- Zijmenu: schuift uit als de muis de linkerrand raakt -->
     <nav id="side-menu" class="side-menu" aria-label="Spelmenu">
@@ -72,9 +121,10 @@
 
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="js/hex.js?v=5"></script>
-  <script src="js/board.js?v=5"></script>
-  <script src="js/lobby.js?v=5"></script>
-  <script src="js/main.js?v=5"></script>
+  <script src="js/hex.js?v=6"></script>
+  <script src="js/board.js?v=6"></script>
+  <script src="js/lobby.js?v=6"></script>
+  <script src="js/settings.js?v=6"></script>
+  <script src="js/main.js?v=6"></script>
 </body>
 </html>
