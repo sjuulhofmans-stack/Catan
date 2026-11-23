@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hexbord</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main id="table">
+    <svg id="board" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+
+    <section class="player-panel corner-tl" data-player="0"></section>
+    <section class="player-panel corner-tr" data-player="1"></section>
+    <section class="player-panel corner-bl" data-player="2"></section>
+    <section class="player-panel corner-br" data-player="3"></section>
+
+    <div id="controls">
+      <button id="btn-fullscreen" type="button">Fullscreen</button>
+      <button id="btn-debug" type="button">Coördinaten</button>
+    </div>
+  </main>
+
+  <script src="js/hex.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
