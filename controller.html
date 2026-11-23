@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#000000">
   <title>De kolonisten van Gennep – telefoon</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="stylesheet" href="css/controller.css?v=8">
+  <link rel="stylesheet" href="css/controller.css?v=9">
 </head>
 <body>
   <main class="phone">
@@ -18,18 +18,16 @@
       <button id="btn-join" type="button">Join</button>
     </section>
 
-    <section id="step-joined" class="step" hidden>
-      <p class="side-label">Jij bent</p>
-      <p id="side" class="side"></p>
-      <p id="wait-msg" class="muted">Wachten tot het spel start…</p>
-      <button id="btn-roll" type="button" class="roll" disabled>Dobbel</button>
-      <p id="last-roll" class="last-roll"></p>
+    <section id="step-joined" class="step joined" hidden>
+      <p class="side-label">Telefoon <span id="side"></span></p>
+      <p id="turn-label" class="turn-label">Wachten tot het spel start…</p>
+      <button id="btn-action" type="button" class="action" disabled>Wachten…</button>
     </section>
 
     <p id="status" class="status"></p>
   </main>
 
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <script src="js/controller.js?v=8"></script>
+  <script src="js/controller.js?v=9"></script>
 </body>
 </html>

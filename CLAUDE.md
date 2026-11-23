@@ -42,4 +42,5 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 - `js/settings.js`: instellingen (2–4 spelers, hoeken `tl/tr/bl/br`, namen, kleuren wit/blauw/rood/oranje uniek, timer per beurt, 10–30 punten). Bij 2 spelers altijd diagonaal (tl+br of tr+bl). Bewaard in localStorage; `Settings.getConfig()` levert de spelconfig.
 - `js/main.js`: schermen (menu → instellingen → lobby → spel), fade-in, fullscreen, debugtoggle
 - `controller.html` + `js/controller.js` + `css/controller.css`: telefoonpagina
-- Berichten: telefoon→bord `join`/`roll`; bord→telefoon `welcome`/`full`/`start`/`rolled`. Het bord bepaalt de worp.
+- Berichten: telefoon→bord `roll`/`endTurn`; bord→telefoon `welcome`/`full`/`state` (`phase` roll|rolled, `player`, `lockMs`). Het bord is de baas over worp en fase.
+- Beurt: fase `roll` (knop "Dobbelen") → worp, timer start, 5 s slot → fase `rolled` (knop "Beurt eindigen") → volgende speler met de klok mee (tl→tr→br→bl). Spatie op het bord = de telefoonknop. Animatie "volgende speler" komt later (`endTurn()` in main.js).

@@ -1,10 +1,13 @@
-// Telefoonkant: verbindt met de bordpagina en stuurt dobbelverzoeken.
+// Telefoonkant: één grote knop. Het bord bepaalt de fase en stuurt "state"-berichten:
+//   phase "roll"   -> knop "Dobbelen"
+//   phase "rolled" -> knop "Beurt eindigen", pas actief na lockMs (5 s)
 const PREFIX = "hexbord-";
 const $ = (id) => document.getElementById(id);
 
 let peer = null;
 let conn = null;
-let mySide = null;
+let ui = { phase: "waiting", player: null, unlockAt: 0 };
+let countdownTimer = null;
 
 function setStatus(text) { $("status").textContent = text; }
 
@@ -42,33 +45,62 @@ function join() {
 function onMessage(msg) {
   switch (msg.type) {
     case "welcome":
-      mySide = msg.side;
       $("side").textContent = msg.side;
       $("step-join").hidden = true;
       $("step-joined").hidden = false;
-      if (msg.started) enableRoll();
+      setStatus("");
       break;
     case "full":
       setStatus("Deze room is al vol.");
       showJoin();
       break;
-    case "start":
-      enableRoll();
-      break;
-    case "rolled":
-      $("last-roll").textContent = `${msg.name ?? "Worp"}: ${msg.d1} + ${msg.d2} = ${msg.d1 + msg.d2}`;
+    case "state":
+      ui = { phase: msg.phase, player: msg.player, unlockAt: Date.now() + (msg.lockMs || 0) };
+      renderAction();
       break;
   }
 }
 
-function enableRoll() {
-  $("wait-msg").textContent = "Het spel is begonnen!";
-  $("btn-roll").disabled = false;
+// Donkere of lichte tekst, afhankelijk van de spelerskleur
+function textOn(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return lum > 0.6 ? "#1a1a1a" : "#ffffff";
 }
 
-$("btn-roll").addEventListener("click", () => {
+function renderAction() {
+  clearTimeout(countdownTimer);
+  const btn = $("btn-action");
+  const p = ui.player;
+
+  $("turn-label").textContent = p ? `${p.name} is aan de beurt` : "Wachten tot het spel start…";
+  btn.style.background = p ? p.color : "";
+  btn.style.color = p ? textOn(p.color) : "";
+
+  if (ui.phase === "roll") {
+    btn.textContent = "Dobbelen";
+    btn.disabled = false;
+  } else if (ui.phase === "rolled") {
+    const left = Math.ceil((ui.unlockAt - Date.now()) / 1000);
+    if (left > 0) {
+      btn.textContent = `Beurt eindigen (${left})`;
+      btn.disabled = true;
+      countdownTimer = setTimeout(renderAction, 200);
+    } else {
+      btn.textContent = "Beurt eindigen";
+      btn.disabled = false;
+    }
+  } else {
+    btn.textContent = "Wachten…";
+    btn.disabled = true;
+  }
+}
+
+$("btn-action").addEventListener("click", () => {
   if (!conn?.open) return;
-  conn.send({ type: "roll" });
+  if (ui.phase === "roll") conn.send({ type: "roll" });
+  else if (ui.phase === "rolled") conn.send({ type: "endTurn" });
+  $("btn-action").disabled = true; // wacht op de nieuwe status van het bord
   navigator.vibrate?.(40);
 });
 

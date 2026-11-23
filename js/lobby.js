@@ -69,8 +69,7 @@ const Lobby = (() => {
   }
 
   function markStarted() {
-    started = true;
-    broadcast({ type: "start" });
+    started = true; // de spelstatus zelf stuurt main.js via broadcast({ type: "state" })
   }
 
   function close() {

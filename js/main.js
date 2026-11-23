@@ -50,6 +50,7 @@ function startGame() {
   clearTimeout(autoStartTimer);
   resetTurns();
   Lobby.markStarted();
+  broadcastState();
   showScreen(null); // menu/lobby faden uit
   setTimeout(() => {
     $("table").classList.remove("hidden");
@@ -115,7 +116,7 @@ function renderSlots(slots) {
   }
   $("btn-start").disabled = joined === 0;
 
-  if (gameStarted) return;
+  if (gameStarted) { broadcastState(); return; } // telefoon die tijdens het spel (opnieuw) joint
   clearTimeout(autoStartTimer);
   if (joined === Lobby.SIDES.length) {
     $("lobby-status").textContent = "Iedereen is er! Het spel start…";
@@ -133,19 +134,27 @@ $("btn-back").addEventListener("click", () => {
 });
 
 // ---------- Beurten + timer ----------
-// Elke worp = begin van de beurt van de volgende speler (met de klok mee).
-// De timer start bij de worp en blijft op 0:00 staan tot er opnieuw gedobbeld wordt.
+// Een beurt heeft twee fasen:
+//   "roll"   -> knop "Dobbelen"
+//   "rolled" -> na 5 s knop "Beurt eindigen"; daarna is de volgende speler (met de klok mee) aan de beurt
+// De timer start bij het dobbelen en blijft op 0:00 staan tot de beurt eindigt.
+// Het bord is de baas over de fase; telefoons volgen via "state"-berichten.
 const CLOCKWISE = ["tl", "tr", "br", "bl"];
+const END_TURN_LOCK_MS = 5000;
 let turnOrder = [];
-let turnIndex = -1;
+let turnIndex = 0;
+let phase = "roll";
+let lockUntil = 0;
 let turnEndsAt = 0;
 let timerTick = null;
 
 function resetTurns() {
   turnOrder = CLOCKWISE.filter((seat) => gameConfig?.players.some((p) => p.seat === seat));
-  turnIndex = -1;
+  turnIndex = 0;
+  phase = "roll";
+  lockUntil = 0;
   stopTimer();
-  document.querySelectorAll(".player-panel").forEach((p) => p.classList.remove("active-turn", "time-up"));
+  highlightTurn();
 }
 
 function currentPlayer() {
@@ -153,15 +162,31 @@ function currentPlayer() {
   return gameConfig?.players.find((p) => p.seat === seat);
 }
 
-function nextTurn() {
-  if (!turnOrder.length) return;
-  turnIndex = (turnIndex + 1) % turnOrder.length;
-  const seat = turnOrder[turnIndex];
+function highlightTurn() {
+  const seat = gameStarted ? turnOrder[turnIndex] : null;
   document.querySelectorAll(".player-panel").forEach((panel) => {
     panel.classList.toggle("active-turn", panel.dataset.seat === seat);
     panel.classList.remove("time-up");
   });
-  if (gameConfig.timer.enabled) startTimer();
+}
+
+function broadcastState() {
+  const p = currentPlayer();
+  Lobby.broadcast({
+    type: "state",
+    phase,
+    player: p ? { name: p.name, color: p.color } : null,
+    lockMs: Math.max(0, lockUntil - Date.now()),
+  });
+}
+
+function endTurn() {
+  if (!gameStarted || phase !== "rolled" || Date.now() < lockUntil) return;
+  stopTimer();
+  turnIndex = (turnIndex + 1) % turnOrder.length;
+  phase = "roll";
+  highlightTurn(); // later: animatie "volgende speler is aan de beurt"
+  broadcastState();
 }
 
 function startTimer() {
@@ -195,19 +220,28 @@ function updateTimer() {
 
 // ---------- Dobbelen ----------
 function roll() {
-  if (!gameStarted) return;
-  nextTurn(); // zet ook de vorige timer terug
+  if (!gameStarted || phase !== "roll") return;
   // Tijdelijk: simpele uitslag. De rollende dobbelstenen komen in een latere stap.
   const d1 = 1 + Math.floor(Math.random() * 6);
   const d2 = 1 + Math.floor(Math.random() * 6);
   const player = currentPlayer();
   showToast(`${player ? player.name : "Worp"}: ${d1} + ${d2} = ${d1 + d2}`);
-  Lobby.broadcast({ type: "rolled", name: player?.name, d1, d2 });
+  phase = "rolled";
+  lockUntil = Date.now() + END_TURN_LOCK_MS;
+  if (gameConfig.timer.enabled) startTimer();
+  broadcastState();
+}
+
+// Eén knop: dobbelen, of (na 5 s) beurt eindigen
+function mainAction() {
+  if (phase === "roll") roll();
+  else endTurn();
 }
 
 // ---------- Berichten van telefoons ----------
 function handleMessage(side, msg) {
   if (msg.type === "roll") roll();
+  if (msg.type === "endTurn") endTurn();
 }
 
 let toastTimer;
@@ -239,7 +273,7 @@ document.addEventListener("keydown", (e) => {
   if (e.target.closest("input, select, textarea")) return; // niet tijdens typen (bijv. een naam met een f)
   if (e.key === "f" || e.key === "F") toggleFullscreen();
   if (e.key === "d" || e.key === "D") toggleDebug();
-  if (e.key === " " && gameStarted) { e.preventDefault(); roll(); } // spatie = dobbelen zonder telefoon
+  if (e.key === " " && gameStarted) { e.preventDefault(); mainAction(); } // spatie = telefoonknop
 });
 
 // ---------- Zijmenu: opent als de muis de linkerrand raakt ----------
