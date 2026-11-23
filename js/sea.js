@@ -24,6 +24,7 @@ const Sea = (() => {
     uniform float uShore;    // 0 = open zee, 1 = eiland + kust zichtbaar
     uniform vec2  uTiles[${MAX_TILES}];
     uniform int   uTileCount;
+    uniform float uBoundR;   // straal van een cirkel die het hele eiland omvat
 
     // Hash zonder sin() (stabiel op alle GPU's)
     float hash12(vec2 p) {
@@ -79,6 +80,9 @@ const Sea = (() => {
 
     // Afstand tot de kust van het eiland (negatief = op het eiland)
     float islandDist(vec2 bp) {
+      // Ver van het eiland is de exacte afstand niet nodig (daar is het toch diep): scheelt veel rekenwerk
+      float r = length(bp);
+      if (r > uBoundR + 3.0) return r - uBoundR;
       float d = 1e5;
       for (int i = 0; i < ${MAX_TILES}; i++) {
         if (i >= uTileCount) break;
@@ -172,6 +176,9 @@ const Sea = (() => {
   let boardSvg = null, boardModel = null;
   const tileData = new Float32Array(MAX_TILES * 2);
   let tileCount = 0;
+  let boundR = 0;
+  let renderScale = RENDER_SCALE;
+  let perfFrames = 0, perfStart = 0, perfChecked = false;
   const startTime = performance.now();
   let lastFrame = startTime;
 
@@ -202,7 +209,7 @@ const Sea = (() => {
       gl.enableVertexAttribArray(aPos);
       gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-      for (const name of ["uTime", "uRes", "uOrigin", "uScale", "uShore", "uTiles", "uTileCount"]) {
+      for (const name of ["uTime", "uRes", "uOrigin", "uScale", "uShore", "uTiles", "uTileCount", "uBoundR"]) {
         loc[name] = gl.getUniformLocation(program, name);
       }
     } catch (err) {
@@ -219,8 +226,8 @@ const Sea = (() => {
 
   function resize() {
     if (!gl) return;
-    canvas.width = Math.max(1, Math.round(innerWidth * RENDER_SCALE));
-    canvas.height = Math.max(1, Math.round(innerHeight * RENDER_SCALE));
+    canvas.width = Math.max(1, Math.round(innerWidth * renderScale));
+    canvas.height = Math.max(1, Math.round(innerHeight * renderScale));
     gl.viewport(0, 0, canvas.width, canvas.height);
     updateBoard();
   }
@@ -230,9 +237,13 @@ const Sea = (() => {
     boardSvg = svg;
     boardModel = model;
     tileCount = Math.min(model.tiles.length, MAX_TILES);
+    boundR = 0;
     model.tiles.slice(0, tileCount).forEach((t, i) => {
-      tileData[i * 2] = t.center.x / model.size;
-      tileData[i * 2 + 1] = t.center.y / model.size;
+      const x = t.center.x / model.size;
+      const y = t.center.y / model.size;
+      tileData[i * 2] = x;
+      tileData[i * 2 + 1] = y;
+      boundR = Math.max(boundR, Math.hypot(x, y) + 1);
     });
     updateBoard();
   }
@@ -241,8 +252,8 @@ const Sea = (() => {
     if (!boardSvg) return;
     const m = boardSvg.getScreenCTM();
     if (!m) return;
-    origin = [m.e * RENDER_SCALE, (innerHeight - m.f) * RENDER_SCALE];
-    scale = m.a * boardModel.size * RENDER_SCALE;
+    origin = [m.e * renderScale, (innerHeight - m.f) * renderScale];
+    scale = m.a * boardModel.size * renderScale;
   }
 
   function setShore(on) { shoreTarget = on ? 1 : 0; }
@@ -259,9 +270,28 @@ const Sea = (() => {
     gl.uniform1f(loc.uShore, shore);
     gl.uniform2fv(loc.uTiles, tileData);
     gl.uniform1i(loc.uTileCount, tileCount);
+    gl.uniform1f(loc.uBoundR, boundR);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
+    checkPerformance(now);
     requestAnimationFrame(frame);
+  }
+
+  // Eén keer na het opstarten: is de laptop te traag, render dan op lagere resolutie.
+  // Alleen meten als de pagina zichtbaar is (verborgen tabbladen worden door de browser vertraagd).
+  function checkPerformance(now) {
+    if (perfChecked || document.visibilityState !== "visible") { perfStart = 0; return; }
+    if (!perfStart) { perfStart = now; perfFrames = 0; return; }
+    perfFrames++;
+    const elapsed = now - perfStart;
+    if (elapsed < 3000) return;
+    const fps = (perfFrames * 1000) / elapsed;
+    perfChecked = true;
+    if (fps < 40 && fps > 5) { // < 5 fps: venster staat waarschijnlijk op de achtergrond; niet op reageren
+      renderScale = 0.33;
+      resize();
+      console.info(`Zee: ${fps.toFixed(0)} fps, resolutie verlaagd`);
+    }
   }
 
   return { init, setBoard, setShore, resize: updateBoard };
