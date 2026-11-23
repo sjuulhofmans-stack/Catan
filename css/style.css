@@ -3,6 +3,8 @@
   --tile-fill: #2b3a2f;
   --tile-stroke: #9fb8a4;
   --text: #e8efe9;
+  --muted: #8a978d;
+  --accent: #ffd166;
   --panel-size: 22vmin;
   --gutter: 2vmin;
 }
@@ -18,13 +20,127 @@ html, body {
   overflow: hidden;
 }
 
-#table {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
+button {
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
 }
 
-/* Bord vult het hele scherm; viewBox + 'meet' houdt het altijd volledig zichtbaar */
+/* ---------- Schermen (menu, lobby) ---------- */
+.screen,
+#table {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.7s ease, visibility 0s linear 0s;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4vmin;
+  padding: 4vmin;
+}
+
+.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.7s ease, visibility 0s linear 0.7s;
+}
+
+#screen-menu { animation: fade-in 1.5s ease both; }
+
+.title {
+  margin: 0;
+  font-size: 12vmin;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+h2 { margin: 0; font-size: 5vmin; font-weight: 600; }
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5vmin;
+  min-width: 40vmin;
+}
+
+.menu.row { flex-direction: row; min-width: 0; }
+
+.menu button {
+  font-size: 3vmin;
+  padding: 1.6vmin 4vmin;
+  border-radius: 1.2vmin;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.menu button.secondary {
+  background: transparent;
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.menu button:disabled { opacity: 0.35; cursor: default; }
+
+/* ---------- Lobby ---------- */
+.lobby-grid {
+  display: flex;
+  align-items: center;
+  gap: 6vmin;
+}
+
+.qr {
+  width: 34vmin;
+  height: 34vmin;
+  padding: 2vmin;
+  background: #fff;
+  border-radius: 1.5vmin;
+  display: grid;
+  place-items: center;
+}
+
+.qr img, .qr canvas { width: 100% !important; height: 100% !important; }
+
+.lobby-info { display: flex; flex-direction: column; gap: 2vmin; min-width: 40vmin; }
+
+.muted { color: var(--muted); font-size: 2.2vmin; margin: 0; max-width: 45vmin; word-break: break-all; }
+
+.room-code {
+  margin: 0;
+  font-size: 11vmin;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--accent);
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.slots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1vmin; }
+
+.slot {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.4vmin 2vmin;
+  font-size: 2.6vmin;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1vmin;
+  transition: border-color 0.4s, background 0.4s;
+}
+
+.slot-state { color: var(--muted); }
+.slot.joined { border-color: #5fd38d; background: rgba(95, 211, 141, 0.1); }
+.slot.joined .slot-state { color: #5fd38d; }
+
+.lobby-status { margin: 0; min-height: 3vmin; font-size: 2.6vmin; color: var(--accent); }
+
+/* ---------- Bord ---------- */
+#table { transition-duration: 1s; }
+
 #board {
   position: absolute;
   inset: 0;
@@ -38,6 +154,25 @@ html, body {
   stroke: var(--tile-stroke);
   stroke-width: 0.03;
   stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+}
+
+/* Langzaam infaden: tegels verschijnen ring voor ring vanuit het midden */
+body.game-started .tile {
+  animation: tile-in 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: calc(0.6s + var(--ring, 0) * 0.5s);
+}
+
+@keyframes tile-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Debuglaag: coördinaten en hoekpunten */
@@ -52,12 +187,9 @@ body.show-debug .debug { display: inline; }
   opacity: 0.7;
 }
 
-.vertex {
-  fill: #ffd166;
-  opacity: 0.8;
-}
+.vertex { fill: var(--accent); opacity: 0.8; }
 
-/* Spelersvakken */
+/* ---------- Spelersvakken ---------- */
 .player-panel {
   position: absolute;
   width: var(--panel-size);
@@ -69,7 +201,10 @@ body.show-debug .debug { display: inline; }
   display: flex;
   flex-direction: column;
   gap: 1vmin;
+  opacity: 0;
 }
+
+body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 
 .corner-tl { top: var(--gutter); left: var(--gutter); }
 .corner-tr { top: var(--gutter); right: var(--gutter); }
@@ -79,11 +214,7 @@ body.show-debug .debug { display: inline; }
 /* Bovenste spelers zitten tegenover: hun vak staat op z'n kop */
 .corner-tl, .corner-tr { transform: rotate(180deg); }
 
-.player-name {
-  font-size: 2.6vmin;
-  font-weight: 600;
-  color: var(--player-color);
-}
+.player-name { font-size: 2.6vmin; font-weight: 600; color: var(--player-color); }
 
 .player-body {
   flex: 1;
@@ -95,7 +226,7 @@ body.show-debug .debug { display: inline; }
   opacity: 0.6;
 }
 
-/* Bediening */
+/* ---------- Bediening ---------- */
 #controls {
   position: absolute;
   top: var(--gutter);
@@ -107,14 +238,11 @@ body.show-debug .debug { display: inline; }
 }
 
 #controls button {
-  font: inherit;
   font-size: 1.8vmin;
   padding: 0.8vmin 1.6vmin;
-  color: var(--text);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 1vmin;
-  cursor: pointer;
 }
 
 #controls button:hover { background: rgba(255, 255, 255, 0.16); }
@@ -122,3 +250,22 @@ body.show-debug .debug { display: inline; }
 /* In fullscreen verbergen; verschijnt weer bij muisbeweging */
 body.is-fullscreen #controls { opacity: 0; }
 body.is-fullscreen.mouse-active #controls { opacity: 1; }
+
+/* ---------- Melding (tijdelijk: dobbeluitslag) ---------- */
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 2vmin 4vmin;
+  font-size: 4vmin;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--accent);
+  border-radius: 1.5vmin;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+.toast.visible { opacity: 1; }

@@ -7,7 +7,39 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <main id="table">
+  <!-- Startmenu -->
+  <section id="screen-menu" class="screen">
+    <h1 class="title">Hexbord</h1>
+    <div class="menu">
+      <button id="btn-new" type="button">Nieuw spel</button>
+      <button id="btn-solo" type="button" class="secondary">Bord zonder telefoons</button>
+      <button type="button" class="secondary btn-fullscreen">Fullscreen</button>
+    </div>
+  </section>
+
+  <!-- Lobby -->
+  <section id="screen-lobby" class="screen hidden">
+    <h2>Join met je telefoon</h2>
+    <div class="lobby-grid">
+      <div id="qr" class="qr"></div>
+      <div class="lobby-info">
+        <p class="muted">Scan de QR-code of open <span id="join-url"></span> en vul in:</p>
+        <p id="room-code" class="room-code">····</p>
+        <ul class="slots">
+          <li id="slot-links" class="slot"><span>Links</span><span class="slot-state">wachten…</span></li>
+          <li id="slot-rechts" class="slot"><span>Rechts</span><span class="slot-state">wachten…</span></li>
+        </ul>
+      </div>
+    </div>
+    <p id="lobby-status" class="lobby-status"></p>
+    <div class="menu row">
+      <button id="btn-back" type="button" class="secondary">Terug</button>
+      <button id="btn-start" type="button" disabled>Nu starten</button>
+    </div>
+  </section>
+
+  <!-- Spel -->
+  <main id="table" class="hidden">
     <svg id="board" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
 
     <section class="player-panel corner-tl" data-player="0"></section>
@@ -16,13 +48,18 @@
     <section class="player-panel corner-br" data-player="3"></section>
 
     <div id="controls">
-      <button id="btn-fullscreen" type="button">Fullscreen</button>
+      <button type="button" class="btn-fullscreen">Fullscreen</button>
       <button id="btn-debug" type="button">Coördinaten</button>
     </div>
+
+    <div id="toast" class="toast"></div>
   </main>
 
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="js/hex.js"></script>
   <script src="js/board.js"></script>
+  <script src="js/lobby.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

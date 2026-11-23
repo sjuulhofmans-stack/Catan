@@ -37,4 +37,7 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 - `css/style.css`: layout en stijl
 - `js/hex.js`: hexwiskunde (axiaal, pointy-top)
 - `js/board.js`: bordmodel (tegels, hoekpunten, randen) + SVG-rendering
-- `js/main.js`: opstart, fullscreen, debugtoggle
+- `js/lobby.js`: PeerJS-host op het bord; slots `links`/`rechts` (peer-id `hexbord-<CODE>`)
+- `js/main.js`: schermen (menu → lobby → spel), fade-in, fullscreen, debugtoggle
+- `controller.html` + `js/controller.js` + `css/controller.css`: telefoonpagina
+- Berichten: telefoon→bord `join`/`roll`; bord→telefoon `welcome`/`full`/`start`/`rolled`. Het bord bepaalt de worp.

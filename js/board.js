@@ -33,7 +33,8 @@ const Board = (() => {
         return e.id;
       });
 
-      tiles.push({ id, ...hex, center, corners: pts, vertexIds, edgeIds });
+      const ring = Hex.distance(hex, { q: 0, r: 0, s: 0 });
+      tiles.push({ id, ...hex, ring, center, corners: pts, vertexIds, edgeIds });
     }
 
     // Omhullende van het bord (voor de viewBox)
@@ -68,6 +69,7 @@ const Board = (() => {
         el("polygon", {
           class: "tile",
           "data-tile": t.id,
+          style: `--ring: ${t.ring}`,
           points: t.corners.map((c) => `${c.x},${c.y}`).join(" "),
         })
       );

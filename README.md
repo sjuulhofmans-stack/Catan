@@ -13,7 +13,8 @@ Dubbelklik op `index.html`. Sneltoetsen: **F** = fullscreen, **D** = coördinate
 
 ## Status
 - [x] Fase 1: hexgrid (19 tegels), fullscreen, 4 spelersvakken
-- [ ] Lobby + telefoons als dobbelsteen (PeerJS)
+- [x] Startmenu + lobby met QR-code, telefoons joinen (PeerJS), bord fadet in
+- [ ] Telefoons als dobbelsteen (basis werkt: uitslag als tekst)
 - [ ] Dobbelanimatie, beurtanimatie
 - [ ] Eigen tegelafbeeldingen + mapgenerator
 - [ ] Camera-detectie van dorpen en steden

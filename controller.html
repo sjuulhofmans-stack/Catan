@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>Hexbord controller</title>
+  <link rel="stylesheet" href="css/controller.css">
+</head>
+<body>
+  <main class="phone">
+    <h1>Hexbord</h1>
+
+    <section id="step-join" class="step">
+      <label for="code">Roomcode</label>
+      <input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD">
+      <button id="btn-join" type="button">Join</button>
+    </section>
+
+    <section id="step-joined" class="step" hidden>
+      <p class="side-label">Jij bent</p>
+      <p id="side" class="side"></p>
+      <p id="wait-msg" class="muted">Wachten tot het spel start…</p>
+      <button id="btn-roll" type="button" class="roll" disabled>Dobbel</button>
+      <p id="last-roll" class="last-roll"></p>
+    </section>
+
+    <p id="status" class="status"></p>
+  </main>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="js/controller.js"></script>
+</body>
+</html>
