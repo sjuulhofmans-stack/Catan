@@ -48,6 +48,7 @@ function startGame() {
   if (gameStarted) return;
   gameStarted = true;
   clearTimeout(autoStartTimer);
+  $("test-controls").hidden = withPhones; // testbord: knop onderin
   resetTurns();
   Lobby.markStarted();
   broadcastState();
@@ -63,7 +64,7 @@ let withPhones = true;
 
 function openSettings(phones) {
   withPhones = phones;
-  $("btn-settings-next").textContent = phones ? "Verder naar lobby" : "Start spel";
+  $("btn-settings-next").textContent = phones ? "Verder naar lobby" : "Start testbord";
   Settings.render();
   showScreen("settings");
 }
@@ -178,7 +179,45 @@ function broadcastState() {
     player: p ? { name: p.name, color: p.color } : null,
     lockMs: Math.max(0, lockUntil - Date.now()),
   });
+  renderTestControls();
 }
+
+// ---------- Testbord: dezelfde knop als op de telefoon, onderin het scherm ----------
+let testCountdown = null;
+
+function textOn(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return lum > 0.6 ? "#1a1a1a" : "#ffffff";
+}
+
+function renderTestControls() {
+  clearTimeout(testCountdown);
+  if ($("test-controls").hidden) return;
+  const btn = $("btn-test-action");
+  const p = currentPlayer();
+  $("test-turn").textContent = p ? `${p.name} is aan de beurt` : "";
+  btn.style.background = p ? p.color : "";
+  btn.style.color = p ? textOn(p.color) : "";
+
+  const left = Math.ceil((lockUntil - Date.now()) / 1000);
+  if (phase === "roll") {
+    btn.textContent = "Dobbelen";
+    btn.disabled = false;
+  } else if (left > 0) {
+    btn.textContent = `Beurt eindigen (${left})`;
+    btn.disabled = true;
+    testCountdown = setTimeout(renderTestControls, 200);
+  } else {
+    btn.textContent = "Beurt eindigen";
+    btn.disabled = false;
+  }
+}
+
+$("btn-test-action").addEventListener("click", (e) => {
+  mainAction();
+  e.currentTarget.blur(); // zodat spatie niet ook nog de knop indrukt
+});
 
 function endTurn() {
   if (!gameStarted || phase !== "rolled" || Date.now() < lockUntil) return;

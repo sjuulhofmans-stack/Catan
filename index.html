@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>De kolonisten van Gennep</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
   <!-- Startmenu -->
@@ -13,7 +13,7 @@
     <h1 class="title"><span class="title-small">De kolonisten van</span>Gennep</h1>
     <div class="menu">
       <button id="btn-new" type="button">Nieuw spel</button>
-      <button id="btn-solo" type="button" class="secondary">Bord zonder telefoons</button>
+      <button id="btn-solo" type="button" class="secondary">Testbord</button>
       <button type="button" class="secondary btn-fullscreen">Fullscreen</button>
     </div>
   </section>
@@ -118,14 +118,20 @@
     </div>
 
     <div id="toast" class="toast"></div>
+
+    <!-- Testbord: telefoonknop onderin het midden -->
+    <div id="test-controls" class="test-controls" hidden>
+      <p id="test-turn" class="test-turn"></p>
+      <button id="btn-test-action" type="button">Dobbelen</button>
+    </div>
   </main>
 
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="js/hex.js?v=9"></script>
-  <script src="js/board.js?v=9"></script>
-  <script src="js/lobby.js?v=9"></script>
-  <script src="js/settings.js?v=9"></script>
-  <script src="js/main.js?v=9"></script>
+  <script src="js/hex.js?v=10"></script>
+  <script src="js/board.js?v=10"></script>
+  <script src="js/lobby.js?v=10"></script>
+  <script src="js/settings.js?v=10"></script>
+  <script src="js/main.js?v=10"></script>
 </body>
 </html>
