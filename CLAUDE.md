@@ -38,6 +38,7 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 - `css/style.css`: layout en stijl
 - `js/hex.js`: hexwiskunde (axiaal, pointy-top)
 - `js/board.js`: bordmodel (tegels, hoekpunten, randen) + SVG-rendering
+- `js/sea.js`: zee-achtergrond (WebGL-shader op halve resolutie, valt terug op 0.33 bij < 40 fps). Kust volgt de tegels via `Sea.setBoard(svg, model)`; `Sea.setShore(true/false)` fadet lagune + branding in/uit. Gemeten ~7,6 ms/frame op Intel Iris Xe.
 - `js/lobby.js`: PeerJS-host op het bord; slots `links`/`rechts` (peer-id `hexbord-<CODE>`)
 - `js/settings.js`: instellingen (2–4 spelers, hoeken `tl/tr/bl/br`, namen, kleuren wit/blauw/rood/oranje uniek, timer per beurt, 10–30 punten). Bij 2 spelers altijd diagonaal (tl+br of tr+bl). Bewaard in localStorage; `Settings.getConfig()` levert de spelconfig.
 - `js/main.js`: schermen (menu → instellingen → lobby → spel), fade-in, fullscreen, debugtoggle
