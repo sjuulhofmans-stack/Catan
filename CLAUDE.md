@@ -30,6 +30,7 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 - Stijl volgt later; nu functioneel en netjes.
 - De gebruiker heeft redelijk wat ervaring: geen basisuitleg, wel kort wat er waarom gebouwd is.
 - Communiceer in het **Nederlands**.
+- **Cache-busting:** lokale CSS/JS worden geladen met `?v=N` in `index.html` en `controller.html`. Bij elke push die CSS/JS wijzigt: N overal ophogen (GitHub Pages cachet 10 min).
 - Achtergrond van het bord is zwart (zwart = geen licht op de beamer).
 
 ## Structuur
