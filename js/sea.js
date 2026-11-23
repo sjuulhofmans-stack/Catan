@@ -116,43 +116,51 @@ const Sea = (() => {
       vec3 n = normalize(vec3(-(hx - h0) / e * strength, -(hy - h0) / e * strength, 1.0));
 
       // Waterkleur naar diepte
-      vec3 deep    = vec3(0.005, 0.055, 0.15);
-      vec3 mid     = vec3(0.010, 0.200, 0.34);
-      vec3 shallow = vec3(0.080, 0.540, 0.56);
-      vec3 col = mix(shallow, mid, smoothstep(0.0, 1.6, depth));
-      col = mix(col, deep, smoothstep(1.6, 7.0, depth));
+      vec3 deep    = vec3(0.010, 0.080, 0.19);
+      vec3 mid     = vec3(0.015, 0.250, 0.40);
+      vec3 shallow = vec3(0.090, 0.600, 0.60);
+      vec3 col = mix(shallow, mid, smoothstep(0.0, 2.4, depth));
+      col = mix(col, deep, smoothstep(2.4, 7.5, depth));
+
+      // Grote, langzaam schuivende vlekken (windvelden) voor variatie op afstand
+      float patches = gnoise(bp * 0.22 + vec2(t * 0.015, t * 0.01)) + 0.5 * gnoise(bp * 0.5 - t * 0.02);
+      col *= 0.9 + 0.35 * patches;
 
       // Licht
+      vec2 uv = fc / uRes;
       vec3 L = normalize(vec3(-0.45, -0.55, 0.70));
       vec3 V = vec3(0.0, 0.0, 1.0);
       float diff = clamp(dot(n, L), 0.0, 1.0);
-      col *= 0.65 + 0.5 * diff;
+      col *= 0.7 + 0.45 * diff;
       float fres = pow(1.0 - clamp(n.z, 0.0, 1.0), 3.0);
-      col += vec3(0.45, 0.62, 0.75) * fres * 1.5;                 // hemelreflectie op hellingen
+      col += vec3(0.45, 0.62, 0.75) * fres * 1.2;                 // hemelreflectie op hellingen
+
+      // Zonneschittering: geconcentreerd in een "zonnepad" linksboven, zoals op luchtfoto's
       vec3 H = normalize(L + V);
-      float spec = pow(clamp(dot(n, H), 0.0, 1.0), 250.0);
-      col += vec3(1.0, 0.96, 0.88) * spec * 1.2;                  // zonneschittering
+      float glitterZone = exp(-pow(length((uv - vec2(0.18, 0.82)) * vec2(1.0, 1.4)) / 0.45, 2.0));
+      float spec = pow(clamp(dot(n, H), 0.0, 1.0), 90.0);
+      col += vec3(1.0, 0.95, 0.85) * spec * (0.15 + 1.3 * glitterZone);
+      col += vec3(0.10, 0.12, 0.12) * glitterZone;                // zacht zonlicht op het water
 
       // Caustics in ondiep water
-      float shallowMask = (1.0 - smoothstep(0.0, 2.0, depth)) * uShore;
-      col += vec3(0.55, 0.95, 0.90) * caustics(bp + n.xy * 0.4, t) * shallowMask * 0.45;
+      float shallowMask = (1.0 - smoothstep(0.0, 2.2, depth)) * uShore;
+      col += vec3(0.55, 0.95, 0.90) * caustics(bp + n.xy * 0.4, t) * shallowMask * 0.4;
 
-      // Schuim: golven die op de kust aanrollen + branding direct langs de kust
-      float fn  = gnoise(bp * 6.0  + vec2(t * 0.3, -t * 0.2)) * 0.5 + 0.5;
-      float fn2 = gnoise(bp * 14.0 - vec2(t * 0.5,  t * 0.4)) * 0.5 + 0.5;
-      float band = 0.5 + 0.5 * sin(d * 10.0 + t * 1.8 + fn * 3.0);
-      float bandMask = 1.0 - smoothstep(0.0, 0.9, d);
-      float foam = pow(band, 4.0) * bandMask * smoothstep(0.35, 0.75, fn2);
-      foam += 1.0 - smoothstep(0.0, 0.08 + 0.06 * fn, d);
-      foam = clamp(foam, 0.0, 1.0) * step(-0.03, d) * uShore;
-      // schuimkoppen op open zee
-      float cap = smoothstep(0.75, 0.95, h0) * smoothstep(0.5, 0.8, fn2) * smoothstep(1.0, 3.0, depth) * 0.5;
+      // Schuim: branding langs de kust + gebroken golven die aanrollen
+      float fn  = gnoise(bp * 5.0  + vec2(t * 0.3, -t * 0.2)) * 0.5 + 0.5;
+      float fn2 = gnoise(bp * 12.0 - vec2(t * 0.5,  t * 0.4)) * 0.5 + 0.5;
+      float surf = 1.0 - smoothstep(0.0, 0.12 + 0.14 * fn, d);              // witte branding
+      float band = 0.5 + 0.5 * sin(d * 14.0 + t * 2.0 + fn * 4.0);
+      float bandMask = 1.0 - smoothstep(0.05, 0.6, d);
+      float rollers = smoothstep(0.75, 1.0, band) * bandMask * smoothstep(0.4, 0.7, fn2);
+      float foam = clamp(surf * (0.6 + 0.4 * fn2) + rollers * 0.8, 0.0, 1.0) * step(-0.03, d) * uShore;
+      // een paar grotere schuimkoppen op open zee
+      float cap = smoothstep(0.8, 1.0, h0) * smoothstep(0.55, 0.85, fn) * smoothstep(1.5, 3.5, depth) * 0.35;
       foam = max(foam, cap);
-      col = mix(col, vec3(0.90, 0.96, 1.0), foam * 0.85);
+      col = mix(col, vec3(0.90, 0.96, 1.0), foam * 0.9);
 
       // Vignet
-      vec2 uv = fc / uRes;
-      col *= 1.0 - 0.35 * pow(length(uv - 0.5) * 1.3, 2.0);
+      col *=1.0 - 0.35 * pow(length(uv - 0.5) * 1.3, 2.0);
 
       gl_FragColor = vec4(col, 1.0);
     }
