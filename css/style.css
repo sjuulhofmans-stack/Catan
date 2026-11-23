@@ -28,6 +28,22 @@ button {
   cursor: pointer;
 }
 
+/* ---------- Zee-achtergrond ---------- */
+#sea {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Zonder WebGL: stilstaande zee */
+#sea.no-webgl { background: radial-gradient(ellipse at center, #0b3a52 0%, #04182a 70%, #020b14 100%); }
+
+/* Menu's iets donkerder over de zee, zodat de tekst leesbaar blijft */
+#screen-menu { background: rgba(0, 0, 0, 0.25); }
+#screen-settings, #screen-lobby { background: rgba(0, 0, 0, 0.55); }
+
 /* ---------- Schermen (menu, lobby) ---------- */
 .screen,
 #table {
@@ -353,7 +369,8 @@ body.show-debug .debug { display: inline; }
   padding: 1.5vmin;
   border: 0.4vmin solid var(--player-color, #888);
   border-radius: 2vmin;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(3, 12, 20, 0.6);
+  backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
   gap: 1vmin;

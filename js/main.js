@@ -6,6 +6,10 @@ const model = Board.createModel({ radius: 2, size: 1 });
 Board.render($("board"), model);
 window.board = model; // handig om in de console te bekijken
 
+// Zee-achtergrond, met de kust langs de tegels
+Sea.init($("sea"));
+Sea.setBoard($("board"), model);
+
 // ---------- Spelinstellingen ----------
 let gameConfig = null;
 
@@ -56,6 +60,8 @@ function startGame() {
   setTimeout(() => {
     $("table").classList.remove("hidden");
     document.body.classList.add("game-started"); // start de tegel-animaties
+    Sea.resize();
+    Sea.setShore(true); // ondiep water + branding rond het eiland
   }, 800);
 }
 
@@ -361,6 +367,7 @@ $("btn-confirm-home").addEventListener("click", () => {
 function goToMainMenu() {
   gameStarted = false;
   resetTurns();
+  Sea.setShore(false);
   Lobby.close();
   $("table").classList.add("hidden");
   setTimeout(() => {
