@@ -47,10 +47,13 @@
     <section class="player-panel corner-bl" data-player="2"></section>
     <section class="player-panel corner-br" data-player="3"></section>
 
-    <div id="controls">
+    <!-- Zijmenu: schuift uit als de muis de linkerrand raakt -->
+    <nav id="side-menu" class="side-menu" aria-label="Spelmenu">
+      <p class="side-menu-title">Menu</p>
+      <button id="btn-home" type="button">Hoofdmenu</button>
       <button type="button" class="btn-fullscreen">Fullscreen</button>
       <button id="btn-debug" type="button">Coördinaten</button>
-    </div>
+    </nav>
 
     <div id="toast" class="toast"></div>
   </main>

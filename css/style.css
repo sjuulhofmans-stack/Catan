@@ -226,30 +226,45 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
   opacity: 0.6;
 }
 
-/* ---------- Bediening ---------- */
-#controls {
+/* ---------- Zijmenu (links) ---------- */
+.side-menu {
   position: absolute;
-  top: var(--gutter);
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  width: 28vmin;
+  padding: 4vmin 2.5vmin;
   display: flex;
-  gap: 1vmin;
-  transition: opacity 0.3s;
+  flex-direction: column;
+  gap: 1.5vmin;
+  background: rgba(12, 15, 13, 0.94);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 6vmin rgba(0, 0, 0, 0.8);
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-#controls button {
-  font-size: 1.8vmin;
-  padding: 0.8vmin 1.6vmin;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+.side-menu.open { transform: translateX(0); }
+
+.side-menu-title {
+  margin: 0 0 1vmin;
+  font-size: 2vmin;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.side-menu button {
+  font-size: 2.4vmin;
+  text-align: left;
+  padding: 1.4vmin 2vmin;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 1vmin;
 }
 
-#controls button:hover { background: rgba(255, 255, 255, 0.16); }
-
-/* In fullscreen verbergen; verschijnt weer bij muisbeweging */
-body.is-fullscreen #controls { opacity: 0; }
-body.is-fullscreen.mouse-active #controls { opacity: 1; }
+.side-menu button:hover { background: rgba(255, 255, 255, 0.14); border-color: var(--accent); }
 
 /* ---------- Melding (tijdelijk: dobbeluitslag) ---------- */
 .toast {

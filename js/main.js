@@ -143,11 +143,35 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "d" || e.key === "D") toggleDebug();
 });
 
-let mouseTimer;
-document.addEventListener("mousemove", () => {
-  document.body.classList.add("mouse-active");
-  clearTimeout(mouseTimer);
-  mouseTimer = setTimeout(() => document.body.classList.remove("mouse-active"), 2000);
+// ---------- Zijmenu: opent als de muis de linkerrand raakt ----------
+const sideMenu = $("side-menu");
+const EDGE_PX = 8;
+let menuCloseTimer;
+
+function setSideMenu(open) {
+  clearTimeout(menuCloseTimer);
+  sideMenu.classList.toggle("open", open);
+}
+
+document.addEventListener("mousemove", (e) => {
+  if (gameStarted && e.clientX <= EDGE_PX) setSideMenu(true);
+});
+sideMenu.addEventListener("mouseenter", () => clearTimeout(menuCloseTimer));
+sideMenu.addEventListener("mouseleave", () => {
+  menuCloseTimer = setTimeout(() => setSideMenu(false), 400);
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") setSideMenu(false); });
+
+// Terug naar het hoofdmenu: spel stoppen en telefoons loskoppelen
+$("btn-home").addEventListener("click", () => {
+  setSideMenu(false);
+  gameStarted = false;
+  Lobby.close();
+  $("table").classList.add("hidden");
+  setTimeout(() => {
+    document.body.classList.remove("game-started", "show-debug"); // zodat de fade-in volgende keer opnieuw speelt
+    showScreen("menu");
+  }, 1000);
 });
 
 console.log(`Bord: ${model.tiles.length} tegels, ${model.vertices.length} hoekpunten, ${model.edges.length} randen`);
