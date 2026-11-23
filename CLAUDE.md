@@ -1,4 +1,4 @@
-# Projectinstructies: AR-bordspel met beamer
+# Projectinstructies: De kolonisten van Gennep (AR-bordspel met beamer)
 
 ## Concept
 Een webapp die een speelbord van zeshoeken via een **beamer op een tafel projecteert**. We spelen fysiek met vrienden en leiden het spel zelf: de app dwingt geen regels af, maar ondersteunt en visualiseert. Het thema is eigen (grondstoffen, handelen, bouwen op een hexbord) met een eigen naam, stijl en tegels. Geen kopie van een bestaand spel: geen bestaande namen, art of kaarten overnemen.

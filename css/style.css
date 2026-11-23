@@ -56,9 +56,22 @@ button {
 
 .title {
   margin: 0;
-  font-size: 12vmin;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 14vmin;
   font-weight: 700;
+  line-height: 1;
   letter-spacing: 0.08em;
+}
+
+.title-small {
+  font-size: 4vmin;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.5vmin;
 }
 
 h2 { margin: 0; font-size: 5vmin; font-weight: 600; }

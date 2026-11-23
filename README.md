@@ -1,4 +1,4 @@
-# Hexbord (AR-bordspel met beamer)
+# De kolonisten van Gennep (AR-bordspel met beamer)
 
 Een speelbord van zeshoeken voor projectie met een beamer. Het spel wordt fysiek gespeeld; de app visualiseert.
 
