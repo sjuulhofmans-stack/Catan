@@ -55,11 +55,9 @@ function onMessage(msg) {
     case "start":
       enableRoll();
       break;
-    case "rolled": {
-      const who = msg.side === mySide ? "Jij gooide" : `${msg.side === "links" ? "Links" : "Rechts"} gooide`;
-      $("last-roll").textContent = `${who} ${msg.d1} + ${msg.d2} = ${msg.d1 + msg.d2}`;
+    case "rolled":
+      $("last-roll").textContent = `${msg.name ?? "Worp"}: ${msg.d1} + ${msg.d2} = ${msg.d1 + msg.d2}`;
       break;
-    }
   }
 }
 

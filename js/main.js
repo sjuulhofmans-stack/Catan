@@ -48,6 +48,7 @@ function startGame() {
   if (gameStarted) return;
   gameStarted = true;
   clearTimeout(autoStartTimer);
+  resetTurns();
   Lobby.markStarted();
   showScreen(null); // menu/lobby faden uit
   setTimeout(() => {
@@ -131,15 +132,82 @@ $("btn-back").addEventListener("click", () => {
   showScreen("settings");
 });
 
+// ---------- Beurten + timer ----------
+// Elke worp = begin van de beurt van de volgende speler (met de klok mee).
+// De timer start bij de worp en blijft op 0:00 staan tot er opnieuw gedobbeld wordt.
+const CLOCKWISE = ["tl", "tr", "br", "bl"];
+let turnOrder = [];
+let turnIndex = -1;
+let turnEndsAt = 0;
+let timerTick = null;
+
+function resetTurns() {
+  turnOrder = CLOCKWISE.filter((seat) => gameConfig?.players.some((p) => p.seat === seat));
+  turnIndex = -1;
+  stopTimer();
+  document.querySelectorAll(".player-panel").forEach((p) => p.classList.remove("active-turn", "time-up"));
+}
+
+function currentPlayer() {
+  const seat = turnOrder[turnIndex];
+  return gameConfig?.players.find((p) => p.seat === seat);
+}
+
+function nextTurn() {
+  if (!turnOrder.length) return;
+  turnIndex = (turnIndex + 1) % turnOrder.length;
+  const seat = turnOrder[turnIndex];
+  document.querySelectorAll(".player-panel").forEach((panel) => {
+    panel.classList.toggle("active-turn", panel.dataset.seat === seat);
+    panel.classList.remove("time-up");
+  });
+  if (gameConfig.timer.enabled) startTimer();
+}
+
+function startTimer() {
+  stopTimer();
+  turnEndsAt = Date.now() + gameConfig.timer.seconds * 1000;
+  updateTimer();
+  timerTick = setInterval(updateTimer, 200);
+}
+
+function stopTimer() {
+  clearInterval(timerTick);
+  timerTick = null;
+  // Alle timers terug naar de ingestelde tijd
+  document.querySelectorAll(".player-timer").forEach((el) => {
+    el.textContent = `⏱ ${formatTime(gameConfig?.timer.seconds ?? 0)}`;
+  });
+}
+
+function updateTimer() {
+  const panel = document.querySelector(`.player-panel[data-seat="${turnOrder[turnIndex]}"]`);
+  const timerEl = panel?.querySelector(".player-timer");
+  if (!timerEl) return;
+  const left = Math.max(0, Math.ceil((turnEndsAt - Date.now()) / 1000));
+  timerEl.textContent = `⏱ ${formatTime(left)}`;
+  if (left === 0) {
+    clearInterval(timerTick);
+    timerTick = null;
+    panel.classList.add("time-up");
+  }
+}
+
+// ---------- Dobbelen ----------
+function roll() {
+  if (!gameStarted) return;
+  nextTurn(); // zet ook de vorige timer terug
+  // Tijdelijk: simpele uitslag. De rollende dobbelstenen komen in een latere stap.
+  const d1 = 1 + Math.floor(Math.random() * 6);
+  const d2 = 1 + Math.floor(Math.random() * 6);
+  const player = currentPlayer();
+  showToast(`${player ? player.name : "Worp"}: ${d1} + ${d2} = ${d1 + d2}`);
+  Lobby.broadcast({ type: "rolled", name: player?.name, d1, d2 });
+}
+
 // ---------- Berichten van telefoons ----------
 function handleMessage(side, msg) {
-  if (msg.type === "roll" && gameStarted) {
-    // Tijdelijk: simpele uitslag. De rollende dobbelstenen komen in een latere stap.
-    const d1 = 1 + Math.floor(Math.random() * 6);
-    const d2 = 1 + Math.floor(Math.random() * 6);
-    showToast(`${side === "links" ? "Links" : "Rechts"} gooit ${d1} + ${d2} = ${d1 + d2}`);
-    Lobby.broadcast({ type: "rolled", side, d1, d2 });
-  }
+  if (msg.type === "roll") roll();
 }
 
 let toastTimer;
@@ -171,6 +239,7 @@ document.addEventListener("keydown", (e) => {
   if (e.target.closest("input, select, textarea")) return; // niet tijdens typen (bijv. een naam met een f)
   if (e.key === "f" || e.key === "F") toggleFullscreen();
   if (e.key === "d" || e.key === "D") toggleDebug();
+  if (e.key === " " && gameStarted) { e.preventDefault(); roll(); } // spatie = dobbelen zonder telefoon
 });
 
 // ---------- Zijmenu: opent als de muis de linkerrand raakt ----------
@@ -218,6 +287,7 @@ $("btn-confirm-home").addEventListener("click", () => {
 // Spel stoppen en telefoons loskoppelen
 function goToMainMenu() {
   gameStarted = false;
+  resetTurns();
   Lobby.close();
   $("table").classList.add("hidden");
   setTimeout(() => {

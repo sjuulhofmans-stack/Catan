@@ -370,6 +370,42 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 /* Bovenste spelers zitten tegenover: hun vak staat op z'n kop */
 .corner-tl, .corner-tr { transform: rotate(180deg); }
 
+/* Aan de beurt: vak licht op in de spelerskleur */
+.player-panel {
+  transition: box-shadow 0.5s ease, background 0.5s ease;
+}
+
+.player-panel.active-turn {
+  background: color-mix(in srgb, var(--player-color) 14%, transparent);
+  box-shadow: 0 0 4vmin color-mix(in srgb, var(--player-color) 60%, transparent);
+}
+
+.player-timer { font-variant-numeric: tabular-nums; }
+.player-panel.active-turn .player-timer { font-size: 3.2vmin; font-weight: 700; color: var(--text); }
+
+/* Tijd om: rood knipperen tot er opnieuw gedobbeld wordt.
+   Via ::after, zodat de fade-in-animatie van het vak zelf niet wordt overschreven. */
+.player-panel::after {
+  content: "";
+  position: absolute;
+  inset: -0.4vmin;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.player-panel.time-up::after {
+  border: 0.4vmin solid #ff4d5a;
+  animation: time-up 1s ease-in-out infinite;
+}
+
+.player-panel.time-up .player-timer { color: #ff4d5a; }
+
+@keyframes time-up {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4vmin rgba(255, 77, 90, 0.8); }
+  50%      { opacity: 0.3; box-shadow: 0 0 1vmin rgba(255, 77, 90, 0.2); }
+}
+
 .player-name { font-size: 2.6vmin; font-weight: 600; color: var(--player-color); }
 
 .player-body {
