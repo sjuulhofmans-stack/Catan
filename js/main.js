@@ -160,11 +160,33 @@ sideMenu.addEventListener("mouseenter", () => clearTimeout(menuCloseTimer));
 sideMenu.addEventListener("mouseleave", () => {
   menuCloseTimer = setTimeout(() => setSideMenu(false), 400);
 });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") setSideMenu(false); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  setSideMenu(false);
+  setConfirmHome(false);
+});
 
-// Terug naar het hoofdmenu: spel stoppen en telefoons loskoppelen
+// Terug naar het hoofdmenu: eerst bevestigen
+const confirmHome = $("confirm-home");
+
+function setConfirmHome(open) {
+  confirmHome.classList.toggle("hidden", !open);
+  if (open) $("btn-confirm-cancel").focus(); // veilige keuze heeft de focus
+}
+
 $("btn-home").addEventListener("click", () => {
   setSideMenu(false);
+  setConfirmHome(true);
+});
+$("btn-confirm-cancel").addEventListener("click", () => setConfirmHome(false));
+confirmHome.addEventListener("click", (e) => { if (e.target === confirmHome) setConfirmHome(false); });
+$("btn-confirm-home").addEventListener("click", () => {
+  setConfirmHome(false);
+  goToMainMenu();
+});
+
+// Spel stoppen en telefoons loskoppelen
+function goToMainMenu() {
   gameStarted = false;
   Lobby.close();
   $("table").classList.add("hidden");
@@ -172,6 +194,6 @@ $("btn-home").addEventListener("click", () => {
     document.body.classList.remove("game-started", "show-debug"); // zodat de fade-in volgende keer opnieuw speelt
     showScreen("menu");
   }, 1000);
-});
+}
 
 console.log(`Bord: ${model.tiles.length} tegels, ${model.vertices.length} hoekpunten, ${model.edges.length} randen`);

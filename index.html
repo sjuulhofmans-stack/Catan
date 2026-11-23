@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hexbord</title>
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <!-- Startmenu -->
@@ -55,14 +55,26 @@
       <button id="btn-debug" type="button">Coördinaten</button>
     </nav>
 
+    <!-- Bevestiging: terug naar hoofdmenu -->
+    <div id="confirm-home" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal">
+        <h3 id="confirm-title">Terug naar het hoofdmenu?</h3>
+        <p>Het potje stopt en de telefoons worden losgekoppeld.</p>
+        <div class="modal-actions">
+          <button id="btn-confirm-cancel" type="button" class="secondary">Annuleren</button>
+          <button id="btn-confirm-home" type="button" class="danger">Ja, stop het potje</button>
+        </div>
+      </div>
+    </div>
+
     <div id="toast" class="toast"></div>
   </main>
 
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="js/hex.js?v=4"></script>
-  <script src="js/board.js?v=4"></script>
-  <script src="js/lobby.js?v=4"></script>
-  <script src="js/main.js?v=4"></script>
+  <script src="js/hex.js?v=5"></script>
+  <script src="js/board.js?v=5"></script>
+  <script src="js/lobby.js?v=5"></script>
+  <script src="js/main.js?v=5"></script>
 </body>
 </html>

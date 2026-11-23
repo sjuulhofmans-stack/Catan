@@ -266,6 +266,50 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 
 .side-menu button:hover { background: rgba(255, 255, 255, 0.14); border-color: var(--accent); }
 
+/* ---------- Bevestigingsvenster ---------- */
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.7);
+  transition: opacity 0.3s ease, visibility 0s linear 0s;
+}
+
+.modal-backdrop.hidden { transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+
+.modal {
+  width: min(60vmin, 90vw);
+  padding: 4vmin;
+  background: #121614;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2vmin;
+  box-shadow: 0 2vmin 8vmin rgba(0, 0, 0, 0.8);
+  transform: scale(1);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.modal-backdrop.hidden .modal { transform: scale(0.92); }
+
+.modal h3 { margin: 0 0 1.5vmin; font-size: 3.4vmin; }
+.modal p { margin: 0 0 3vmin; font-size: 2.3vmin; color: var(--muted); }
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 1.5vmin; }
+
+.modal-actions button {
+  font-size: 2.3vmin;
+  font-weight: 600;
+  padding: 1.3vmin 2.6vmin;
+  border-radius: 1vmin;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+}
+
+.modal-actions button:hover { background: rgba(255, 255, 255, 0.1); }
+.modal-actions button.danger { background: #e63946; border-color: #e63946; color: #fff; }
+.modal-actions button.danger:hover { background: #f05561; }
+
 /* ---------- Melding (tijdelijk: dobbeluitslag) ---------- */
 .toast {
   position: absolute;
