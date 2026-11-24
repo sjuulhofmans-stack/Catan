@@ -571,3 +571,44 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 }
 
 .toast.visible { opacity: 1; }
+
+/* ---------- Knoppen altijd ondoorzichtig (ook uitgeschakeld) ---------- */
+:root {
+  --btn-bg: #1c2622;
+  --btn-hover: #2a3832;
+  --btn-disabled-bg: #2b302e;
+  --btn-disabled-text: #7d8681;
+}
+
+.menu button.secondary,
+.segmented,
+.seat-action,
+.side-menu button,
+.modal-actions button:not(.danger),
+.settings select {
+  background: var(--btn-bg);
+}
+
+.menu button.secondary:hover,
+.seat-action:hover,
+.side-menu button:hover,
+.modal-actions button:not(.danger):hover {
+  background: var(--btn-hover);
+}
+
+.segmented button:not(.selected) { background: var(--btn-bg); }
+
+.menu button:disabled,
+.settings select:disabled,
+#btn-test-action:disabled {
+  opacity: 1;
+  background: var(--btn-disabled-bg) !important; /* wint van de spelerskleur die JS inline zet */
+  color: var(--btn-disabled-text) !important;
+  border-color: var(--btn-disabled-bg);
+}
+
+/* Instellingen: kaarten massief in plaats van doorzichtig */
+.seat { background: #111714; }
+.seat.active { background: #141b18; }
+.seat:not(.active) { opacity: 1; border-color: #2b302e; }
+.seat:not(.active) .seat-pos { color: #5f6863; }

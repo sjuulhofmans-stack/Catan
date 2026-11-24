@@ -82,3 +82,10 @@ h1 { font-size: 18px; color: var(--muted); }
 
 .action:active:not(:disabled) { transform: scale(0.96); }
 .status { margin: 0; color: var(--muted); min-height: 1.4em; }
+
+/* Uitgeschakelde knop: massief grijs i.p.v. doorzichtig */
+button:disabled {
+  opacity: 1;
+  background: #2b302e !important; /* wint van de spelerskleur die JS inline zet */
+  color: #7d8681 !important;
+}

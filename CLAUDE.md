@@ -8,7 +8,7 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 - Scripts als gewone `<script>`-tags (geen ES-modules), zodat `index.html` ook lokaal via dubbelklik werkt.
 - Twee soorten pagina's:
   - `index.html`: het bord (laptop aan beamer, fullscreen).
-  - `controller.html`: de telefoon (later; joinen via QR-code/roomcode).
+  - `controller.html`: de telefoon (joinen via QR-code/roomcode).
 - Verbinding bord en telefoons: **WebRTC via PeerJS** (geen eigen server nodig). Firebase als alternatief als dat hapert.
 
 ## Einddoel (later)
@@ -31,7 +31,8 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 - De gebruiker heeft redelijk wat ervaring: geen basisuitleg, wel kort wat er waarom gebouwd is.
 - Communiceer in het **Nederlands**.
 - **Cache-busting:** lokale CSS/JS worden geladen met `?v=N` in `index.html` en `controller.html`. Bij elke push die CSS/JS wijzigt: N overal ophogen (GitHub Pages cachet 10 min).
-- Achtergrond van het bord is zwart (zwart = geen licht op de beamer).
+- Achtergrond is een geanimeerde zee (`js/sea.js`); `body` blijft zwart als terugval.
+- **Knoppen zijn nooit doorzichtig**, ook niet uitgeschakeld (massief grijs i.p.v. `opacity`). Zie het blok onderaan `css/style.css` en `css/controller.css`.
 
 ## Structuur
 - `index.html`: bordpagina
