@@ -490,9 +490,10 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 /* ---------- Testbord-knop (onderin het midden) ---------- */
 .test-controls {
   position: absolute;
-  left: 50%;
-  bottom: var(--gutter);
-  transform: translateX(-50%);
+  right: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%); /* rechts in het midden, tussen de twee spelersvakken: vrij van het bord */
+  width: var(--panel-size);
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -504,8 +505,8 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 .test-turn { margin: 0; font-size: 2.2vmin; color: var(--muted); }
 
 #btn-test-action {
-  min-width: 34vmin;
-  padding: 1.8vmin 4vmin;
+  width: 100%;
+  padding: 2.2vmin 1.5vmin;
   font-size: 3.2vmin;
   font-weight: 800;
   border: none;
