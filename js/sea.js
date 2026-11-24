@@ -72,9 +72,9 @@ const Sea = (() => {
       return h;
     }
 
-    // Afstand tot een pointy-top zeshoek met binnenstraal r
+    // Afstand tot een flat-top zeshoek met binnenstraal r
     float sdHex(vec2 p, float r) {
-      p = abs(p.yx);
+      p = abs(p);
       const vec3 k = vec3(-0.866025404, 0.5, 0.577350269);
       p -= 2.0 * min(dot(k.xy, p), 0.0) * k.xy;
       p -= vec2(clamp(p.x, -k.z * r, k.z * r), r);

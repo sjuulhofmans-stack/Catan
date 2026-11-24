@@ -1,9 +1,9 @@
-// Hexwiskunde: axiale coördinaten (q, r), pointy-top, s = -q - r.
+// Hexwiskunde: axiale coördinaten (q, r), flat-top (platte kant boven/onder, zoals de tegelafbeeldingen), s = -q - r.
 // Referentie: https://www.redblobgames.com/grids/hexagons/
 const Hex = (() => {
   const SQRT3 = Math.sqrt(3);
 
-  // Alle hexen binnen een straal rond (0,0). Straal 2 geeft rijen 3-4-5-4-3.
+  // Alle hexen binnen een straal rond (0,0). Straal 2 geeft kolommen 3-4-5-4-3.
   function generateHexagon(radius) {
     const hexes = [];
     for (let r = -radius; r <= radius; r++) {
@@ -16,14 +16,14 @@ const Hex = (() => {
   }
 
   function toPixel({ q, r }, size) {
-    return { x: size * SQRT3 * (q + r / 2), y: size * 1.5 * r };
+    return { x: size * 1.5 * q, y: size * SQRT3 * (r + q / 2) };
   }
 
-  // Hoek i: 0 = rechtsboven, met de klok mee (SVG-y wijst omlaag).
+  // Hoek i: 0 = rechts, met de klok mee (SVG-y wijst omlaag).
   function corners(center, size) {
     const pts = [];
     for (let i = 0; i < 6; i++) {
-      const a = (Math.PI / 180) * (60 * i - 30);
+      const a = (Math.PI / 180) * (60 * i);
       pts.push({ x: center.x + size * Math.cos(a), y: center.y + size * Math.sin(a) });
     }
     return pts;

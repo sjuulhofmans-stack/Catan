@@ -49,6 +49,30 @@ const Board = (() => {
     return { size, tiles, vertices: [...vertices.values()], edges: [...edges.values()], bounds };
   }
 
+  // ---------- Terrein ----------
+  // Tegelafbeeldingen: assets/tiles/land/<type>_<variant>.webp (flat-top, bijgesneden op de zeshoek).
+  // Goud, meer en vulkaan zijn er al als afbeelding; die zet de mapgenerator later in.
+  const TILE_PATH = "assets/tiles/land/";
+  const VARIANTS = 6;
+  const BASE_MIX = { hout: 4, wol: 4, graan: 4, steen: 3, erts: 3, woestijn: 1 }; // 19 tegels
+
+  function shuffle(list) {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  }
+
+  // Tijdelijk: willekeurige verdeling (de gebalanceerde mapgenerator komt later)
+  function assignRandomTerrain(model, mix = BASE_MIX) {
+    const bag = shuffle(Object.entries(mix).flatMap(([type, n]) => Array(n).fill(type)));
+    model.tiles.forEach((t, i) => {
+      t.terrain = bag[i % bag.length];
+      t.variant = 1 + Math.floor(Math.random() * VARIANTS);
+    });
+  }
+
   function el(name, attrs = {}) {
     const node = document.createElementNS(SVG_NS, name);
     for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
@@ -64,15 +88,25 @@ const Board = (() => {
     const tileLayer = el("g", { id: "layer-tiles" });
     const debugLayer = el("g", { id: "layer-debug", class: "debug" });
 
+    const s = model.size;
+    const w = 2 * s * 1.004;            // flat-top: breedte = 2 × straal (heel licht groter: geen naadjes)
+    const h = Math.sqrt(3) * s * 1.004; // hoogte = √3 × straal
+
     for (const t of model.tiles) {
-      tileLayer.append(
-        el("polygon", {
-          class: "tile",
-          "data-tile": t.id,
-          style: `--ring: ${t.ring}`,
-          points: t.corners.map((c) => `${c.x},${c.y}`).join(" "),
-        })
-      );
+      const g = el("g", { class: "tile", "data-tile": t.id, style: `--ring: ${t.ring}` });
+      g.append(el("polygon", { points: t.corners.map((c) => `${c.x},${c.y}`).join(" ") })); // terugval zonder afbeelding
+      if (t.terrain) {
+        g.dataset.terrain = t.terrain;
+        g.append(el("image", {
+          href: `${TILE_PATH}${t.terrain}_${t.variant}.webp`,
+          x: t.center.x - w / 2,
+          y: t.center.y - h / 2,
+          width: w,
+          height: h,
+          preserveAspectRatio: "none",
+        }));
+      }
+      tileLayer.append(g);
       const label = el("text", { class: "tile-label", x: t.center.x, y: t.center.y });
       label.textContent = t.id;
       debugLayer.append(label);
@@ -85,5 +119,5 @@ const Board = (() => {
     svg.append(tileLayer, debugLayer);
   }
 
-  return { createModel, render };
+  return { createModel, render, assignRandomTerrain };
 })();

@@ -3,7 +3,13 @@ const $ = (id) => document.getElementById(id);
 
 // ---------- Bord (wordt meteen getekend, maar blijft verborgen tot de start) ----------
 const model = Board.createModel({ radius: 2, size: 1 });
-Board.render($("board"), model);
+
+// Nieuwe (voorlopig willekeurige) verdeling van de landtegels
+function newBoard() {
+  Board.assignRandomTerrain(model);
+  Board.render($("board"), model);
+}
+newBoard();
 window.board = model; // handig om in de console te bekijken
 
 // Zee-achtergrond, met de kust langs de tegels
@@ -83,6 +89,7 @@ Settings.mount();
 $("btn-settings-back").addEventListener("click", () => showScreen("menu"));
 $("btn-settings-next").addEventListener("click", () => {
   applyConfig(Settings.getConfig());
+  newBoard(); // nu al, zodat de tegelafbeeldingen laden terwijl de lobby open staat
   if (withPhones) openLobby();
   else startGame();
 });
@@ -289,7 +296,7 @@ let diceRoller = null;
 function diceGeometry() {
   const m = $("board").getScreenCTM();
   if (!m || !innerWidth) return null;
-  const view = innerWidth / (DIE_SIZE_IN_TILES * Math.sqrt(3) * m.a); // wereldbreedte van het scherm, 1 = steen
+  const view = innerWidth / (DIE_SIZE_IN_TILES * 2 * m.a); // wereldbreedte van het scherm, 1 = steen (flat-top tegel = 2 breed)
   return { view, landR: (LAND_RADIUS * m.a * view) / innerWidth };
 }
 

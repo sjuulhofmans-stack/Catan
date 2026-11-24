@@ -22,7 +22,7 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 8. Camera-detectie van post-its (dorpen/steden) op hoekpunten van het grid, met kalibratie camera ↔ projectie (homografie).
 
 ## Fasen
-- **Fase 1 (klaar zodra afgevinkt):** fullscreen-knop, hexgrid 3-4-5-4-3 (19 tegels), bord schaalt altijd volledig in beeld, 4 spelersvakken in de hoeken, hexcoördinaten (axiaal/cube) met geadresseerde hoekpunten en randen.
+- **Fase 1 (klaar):** fullscreen-knop, hexgrid 3-4-5-4-3 (19 tegels), bord schaalt altijd volledig in beeld, 4 spelersvakken in de hoeken, hexcoördinaten (axiaal/cube) met geadresseerde hoekpunten en randen.
 - Volgende fasen bepaalt de gebruiker stap voor stap.
 
 ## Werkwijze
@@ -37,8 +37,10 @@ Een webapp die een speelbord van zeshoeken via een **beamer op een tafel project
 ## Structuur
 - `index.html`: bordpagina
 - `css/style.css`: layout en stijl
-- `js/hex.js`: hexwiskunde (axiaal, pointy-top)
-- `js/board.js`: bordmodel (tegels, hoekpunten, randen) + SVG-rendering
+- `js/hex.js`: hexwiskunde (axiaal, **flat-top**, want de tegelafbeeldingen zijn flat-top; bord = kolommen 3-4-5-4-3)
+- `js/board.js`: bordmodel (tegels, hoekpunten, randen) + SVG-rendering. Tegels als `<image>` uit `assets/tiles/land/<type>_<1-6>.webp`. `assignRandomTerrain()` is tijdelijk (mix hout4 wol4 graan4 steen3 erts3 woestijn1); mapgenerator volgt.
+- `assets/tiles/land/`: 9 types × 6 varianten (hout, wol, graan, steen, erts, goud, woestijn, meer, vulkaan), 512 px WebP, bijgesneden op de zeshoek. Bron: `Hex tegels/NIeuwe tegels.zip` van de gebruiker (eigen ontwerp; zip staat in .gitignore, 817 MB). In de zip zitten ook zee-, haven- en visgrondtegels (nog niet gebruikt) en per tegel losse lagen (ondergrond/elementen).
+- `Hex tegels/Tegels internet/`: plaatjes van internet (originele art van een bestaand spel). **Niet gebruiken of publiceren** (staat in .gitignore).
 - `js/sea.js`: zee-achtergrond. Gebruikerswens: **zeer kalme zee**, het eiland is enorm en van grote hoogte gezien; golven rollen rustig (≈5 s periode) op de kust aan; open zee beweegt rustig maar zichtbaar (gebruiker vond ≈9 s te traag). Geen snelle bewegingen, geen caustics/flikkering. (WebGL-shader op halve resolutie, valt terug op 0.33 bij < 40 fps). Kust volgt de tegels via `Sea.setBoard(svg, model)`; `Sea.setShore(true/false)` fadet lagune + branding in/uit. Gemeten ~7,6 ms/frame op Intel Iris Xe.
 - `js/dice-roller.js`: 3D-dobbelanimatie (three.js + cannon-es via esm.sh, **ES-module**, de enige uitzondering; werkt alleen online). Kopie van de door de gebruiker aangeleverde `Dobbelstenen/code/dice.js` (origineel niet aanpassen) met `roll(force, {from, landR})`: gooien vanuit de hoek van de speler, landen binnen het bord. Aangestuurd door `throwDice()` in main.js; het bord bepaalt de uitslag, de stenen landen daarop. Zonder three.js: alleen tekstuitslag.
 - `Dobbelstenen/`: assets van de gebruiker (GLB-modellen, textures, originele dice.js).
