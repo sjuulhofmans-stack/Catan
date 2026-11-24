@@ -1,8 +1,9 @@
 // Geanimeerde zee als achtergrond (WebGL-fragmentshader, eigen code).
-// - Golven: lange deining + scherpe kabbeling (gradient noise), belicht met diffuus licht,
-//   hemelreflectie en zonneschittering.
-// - Rond het eiland (de bordtegels): ondiep turquoise water, lichtnetten (caustics) en
-//   schuimgolven die op de kust aanrollen. Dit fadet in met Sea.setShore(1) bij de start.
+// Uitgangspunt: een enorm eiland, gezien van grote hoogte, op een zeer kalme zee.
+// - Oppervlak: trage deining + fijne, gladde structuur, belicht met diffuus licht,
+//   hemelreflectie en een zacht zonnepad.
+// - Rond het eiland (de bordtegels): ondiep turquoise water met zandbanken en golflijnen die
+//   langzaam (periode ~9 s) op de kust aanrollen. Dit fadet in met Sea.setShore(1) bij de start.
 // Wordt op halve resolutie gerenderd en door de browser opgeschaald: zee is zacht, dus dat
 // scheelt veel rekenwerk zonder zichtbaar verschil.
 const Sea = (() => {
@@ -52,18 +53,20 @@ const Sea = (() => {
 
     const mat2 ROT = mat2(1.6, 1.2, -1.2, 1.6);
 
-    // Hoogte van het wateroppervlak
+    // Hoogte van het wateroppervlak.
+    // Het eiland is enorm en we kijken van grote hoogte: de zee is dus fijn van textuur en
+    // beweegt heel traag. Gladde noise (geen scherpe toppen) houdt het rustig.
     float height(vec2 p, float t) {
       float h = 0.0;
-      // lange deining uit twee richtingen
-      h += 0.30 * sin(dot(p, vec2(0.86, 0.50)) * 1.3 + t * 0.9);
-      h += 0.18 * sin(dot(p, vec2(-0.40, 0.92)) * 2.1 + t * 1.3);
-      // kabbeling met scherpe toppen
-      vec2 q = p * 1.4 + vec2(t * 0.12, t * 0.07);
-      float a = 0.35;
-      for (int i = 0; i < 5; i++) {
-        h += a * (1.0 - abs(gnoise(q)) * 2.0) * 0.6;
-        q = ROT * q + vec2(t * 0.15, -t * 0.10);
+      // zeer trage, lange deining
+      h += 0.20 * sin(dot(p, vec2(0.86, 0.50)) * 2.0 + t * 0.25);
+      h += 0.12 * sin(dot(p, vec2(-0.40, 0.92)) * 2.8 + t * 0.32);
+      // fijne oppervlaktestructuur die nauwelijks verschuift
+      vec2 q = p * 3.0 + vec2(t * 0.020, t * 0.012);
+      float a = 0.3;
+      for (int i = 0; i < 4; i++) {
+        h += a * gnoise(q);
+        q = ROT * q + vec2(t * 0.025, -t * 0.015);
         a *= 0.5;
       }
       return h;
@@ -91,16 +94,9 @@ const Sea = (() => {
       return d;
     }
 
-    // Lichtnetten op de bodem van ondiep water
-    float caustics(vec2 p, float t) {
-      vec2 q = p * 2.2;
-      float a  = gnoise(q + vec2(t * 0.35, t * 0.20));
-      float b  = gnoise(q * 1.25 + vec2(-t * 0.30, t * 0.27) + 7.3);
-      float a2 = gnoise(q * 1.9 + vec2(t * 0.50, -t * 0.30) + 3.1);
-      float b2 = gnoise(q * 2.3 + vec2(-t * 0.42, -t * 0.36) + 11.7);
-      float c = 1.0 - smoothstep(0.0, 0.12, abs(a - b));
-      c += 0.6 * (1.0 - smoothstep(0.0, 0.10, abs(a2 - b2)));
-      return c;
+    // Zandbanken en bodemstructuur onder ondiep water (staat stil)
+    float seabed(vec2 p) {
+      return gnoise(p * 1.2) + 0.5 * gnoise(p * 2.7 + 5.0) + 0.25 * gnoise(p * 6.0 + 9.0);
     }
 
     void main() {
@@ -111,60 +107,66 @@ const Sea = (() => {
       float d = islandDist(bp);
       float depth = mix(4.0, clamp(d, 0.0, 8.0), uShore);
 
-      // Normaal van het oppervlak via eindige differenties
+      // Normaal van het oppervlak via eindige differenties (laag = kalm water)
       float e = 0.03;
       float h0 = height(bp, t);
       float hx = height(bp + vec2(e, 0.0), t);
       float hy = height(bp + vec2(0.0, e), t);
-      float strength = mix(0.10, 0.22, smoothstep(0.0, 3.0, depth)); // ondiep water is vlakker
+      float strength = mix(0.04, 0.09, smoothstep(0.0, 2.0, depth));
       vec3 n = normalize(vec3(-(hx - h0) / e * strength, -(hy - h0) / e * strength, 1.0));
 
       // Waterkleur naar diepte
       vec3 deep    = vec3(0.010, 0.080, 0.19);
       vec3 mid     = vec3(0.015, 0.250, 0.40);
       vec3 shallow = vec3(0.090, 0.600, 0.60);
-      vec3 col = mix(shallow, mid, smoothstep(0.0, 2.4, depth));
-      col = mix(col, deep, smoothstep(2.4, 7.5, depth));
+      vec3 col = mix(shallow, mid, smoothstep(0.0, 1.8, depth));
+      col = mix(col, deep, smoothstep(1.8, 7.0, depth));
 
-      // Grote, langzaam schuivende vlekken (windvelden) voor variatie op afstand
-      float patches = gnoise(bp * 0.22 + vec2(t * 0.015, t * 0.01)) + 0.5 * gnoise(bp * 0.5 - t * 0.02);
-      col *= 0.9 + 0.35 * patches;
+      // Ondiep water: zandbanken schemeren door, vlak bij de kust bijna zandkleurig
+      float shallowMask = (1.0 - smoothstep(0.0, 1.8, depth)) * uShore;
+      col += vec3(0.10, 0.16, 0.12) * seabed(bp) * shallowMask;
+      col = mix(col, vec3(0.50, 0.78, 0.70), (1.0 - smoothstep(0.0, 0.2, depth)) * 0.35 * uShore);
+
+      // Grote vlekken (windvelden) die heel langzaam verschuiven
+      float patches = gnoise(bp * 0.22 + vec2(t * 0.004, t * 0.003)) + 0.5 * gnoise(bp * 0.5 - t * 0.005);
+      col *= 0.92 + 0.3 * patches;
 
       // Licht
       vec2 uv = fc / uRes;
       vec3 L = normalize(vec3(-0.45, -0.55, 0.70));
       vec3 V = vec3(0.0, 0.0, 1.0);
       float diff = clamp(dot(n, L), 0.0, 1.0);
-      col *= 0.7 + 0.45 * diff;
+      col *= 0.75 + 0.35 * diff;
       float fres = pow(1.0 - clamp(n.z, 0.0, 1.0), 3.0);
-      col += vec3(0.45, 0.62, 0.75) * fres * 1.2;                 // hemelreflectie op hellingen
+      col += vec3(0.45, 0.62, 0.75) * fres;
 
-      // Zonneschittering: geconcentreerd in een "zonnepad" linksboven, zoals op luchtfoto's
+      // Zonneschittering in een zonnepad linksboven: zacht, zonder flikkering
       vec3 H = normalize(L + V);
       float glitterZone = exp(-pow(length((uv - vec2(0.18, 0.82)) * vec2(1.0, 1.4)) / 0.45, 2.0));
-      float spec = pow(clamp(dot(n, H), 0.0, 1.0), 90.0);
-      col += vec3(1.0, 0.95, 0.85) * spec * (0.15 + 1.3 * glitterZone);
-      col += vec3(0.10, 0.12, 0.12) * glitterZone;                // zacht zonlicht op het water
+      float spec = pow(clamp(dot(n, H), 0.0, 1.0), 60.0);
+      col += vec3(1.0, 0.95, 0.85) * spec * (0.08 + 0.8 * glitterZone);
+      col += vec3(0.10, 0.12, 0.12) * glitterZone;
 
-      // Caustics in ondiep water
-      float shallowMask = (1.0 - smoothstep(0.0, 2.2, depth)) * uShore;
-      col += vec3(0.55, 0.95, 0.90) * caustics(bp + n.xy * 0.4, t) * shallowMask * 0.4;
+      // Golven die langzaam op de kust aanrollen (periode ~9 s, ruim een tegel per 40 s)
+      float w = 6.2831853 / 9.0;
+      float k = 6.2831853 / 0.22;                                   // afstand tussen de golflijnen
+      float bend = gnoise(bp * 1.3) * 1.2 + gnoise(bp * 3.1 + 2.0) * 0.4; // golflijnen niet perfect evenwijdig
+      float wave = 0.5 + 0.5 * sin(d * k + t * w + bend * 3.0);
+      float crest = smoothstep(0.82, 1.0, wave);
+      float waveZone = smoothstep(0.65, 0.15, d) * smoothstep(0.0, 0.05, d);
+      float breakup = smoothstep(0.25, 0.65, gnoise(bp * 4.0 + vec2(t * 0.01, 0.0)) * 0.5 + 0.5);
+      float rollers = crest * waveZone * mix(0.35, 1.0, breakup);
 
-      // Schuim: branding langs de kust + gebroken golven die aanrollen
-      float fn  = gnoise(bp * 5.0  + vec2(t * 0.3, -t * 0.2)) * 0.5 + 0.5;
-      float fn2 = gnoise(bp * 12.0 - vec2(t * 0.5,  t * 0.4)) * 0.5 + 0.5;
-      float surf = 1.0 - smoothstep(0.0, 0.12 + 0.14 * fn, d);              // witte branding
-      float band = 0.5 + 0.5 * sin(d * 14.0 + t * 2.0 + fn * 4.0);
-      float bandMask = 1.0 - smoothstep(0.05, 0.6, d);
-      float rollers = smoothstep(0.75, 1.0, band) * bandMask * smoothstep(0.4, 0.7, fn2);
-      float foam = clamp(surf * (0.6 + 0.4 * fn2) + rollers * 0.8, 0.0, 1.0) * step(-0.03, d) * uShore;
-      // een paar grotere schuimkoppen op open zee
-      float cap = smoothstep(0.8, 1.0, h0) * smoothstep(0.55, 0.85, fn) * smoothstep(1.5, 3.5, depth) * 0.35;
-      foam = max(foam, cap);
-      col = mix(col, vec3(0.90, 0.96, 1.0), foam * 0.9);
+      // Branding: zachte schuimrand die in hetzelfde ritme op en neer spoelt
+      float swash = 0.5 + 0.5 * sin(t * w + bend * 3.0);
+      float surfW = 0.035 + 0.035 * swash + 0.02 * (gnoise(bp * 6.0) * 0.5 + 0.5);
+      float surf = 1.0 - smoothstep(0.0, surfW, d);
+
+      float foam = clamp(surf * 0.85 + rollers * 0.55, 0.0, 1.0) * step(-0.03, d) * uShore;
+      col = mix(col, vec3(0.90, 0.96, 1.0), foam);
 
       // Vignet
-      col *=1.0 - 0.35 * pow(length(uv - 0.5) * 1.3, 2.0);
+      col *= 1.0 - 0.35 * pow(length(uv - 0.5) * 1.3, 2.0);
 
       gl_FragColor = vec4(col, 1.0);
     }
