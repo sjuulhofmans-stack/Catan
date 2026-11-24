@@ -92,10 +92,20 @@ export class DiceRoller{
     for(let k=0;k<6;k++)B.forEach((b,i)=>fr[i].push(fr[i][fr[i].length-1]));
     const fin=fr.map(f=>f[f.length-1]),q=new THREE.Quaternion(),up=new THREE.Vector3();let ok=true,score=0;
     fin.forEach(f=>{q.set(f[3],f[4],f[5],f[6]);up.set(0,1,0).applyQuaternion(q.invert());const m=Math.max(...[up.x,up.y,up.z].map(Math.abs));
-      const inX=this.hx-1-Math.abs(f[0]),inZ=this.hz-1-Math.abs(f[2]),inR=P.landR?P.landR-.7-Math.hypot(f[0],f[2]):Infinity;
-      if(m<.985||f[1]>.65||inX<0||inZ<0||inR<0)ok=false;score+=Math.min(inX,inZ,inR,0)+(m-1)*10;});
+      // Met landR wordt de plek later bepaald door fit(); hier alleen: plat en stil op tafel
+      const inX=P.landR?0:this.hx-1-Math.abs(f[0]),inZ=P.landR?0:this.hz-1-Math.abs(f[2]);
+      if(m<.985||f[1]>.65||inX<0||inZ<0)ok=false;score+=Math.min(inX,inZ,0)+(m-1)*10;});
     return{frames:fr,final:fin,ok,score};}
-  simulate(o){let best=null;for(let i=0;i<30;i++){const P=this.randomThrow(o),r=this.run(P);r.info=P.info;if(r.ok)return r;if(!best||r.score>best.score)best=r;}return best;}
+  // Een worp op een vlakke tafel blijft natuurkundig gelijk als je hem verschuift. Verschuif de hele worp zodat
+  // de stenen binnen o.landR eindigen, mits ze dan nog van buiten beeld en uit de richting o.from komen.
+  fit(r,o){const fin=r.final,mx=(fin[0][0]+fin[1][0])/2,mz=(fin[0][2]+fin[1][2])/2,ta=R()*TAU,tr=Math.sqrt(R())*o.landR*.45;
+    const dx=Math.cos(ta)*tr-mx,dz=Math.sin(ta)*tr-mz,ux=Math.cos(o.from),uz=Math.sin(o.from);
+    if(fin.some(f=>Math.hypot(f[0]+dx,f[2]+dz)>o.landR-.7))return null;
+    for(const fr of r.frames){const s=fr[0],sx=s[0]+dx,sz=s[2]+dz;if(Math.abs(sx)<this.hx+.8&&Math.abs(sz)<this.hz+.8)return null;if(sx*ux+sz*uz<=0)return null;}
+    const seen=new Set();r.frames.forEach(fr=>fr.forEach(p=>{if(seen.has(p))return;seen.add(p);p[0]+=dx;p[2]+=dz;}));return r;}
+  simulate(o){let best=null;for(let i=0;i<40;i++){const P=this.randomThrow(o),r=this.run(P);r.info=P.info;
+      if(r.ok&&o&&o.landR){for(let k=0;k<6;k++){const s=this.fit(r,o);if(s)return s;}continue;}
+      if(r.ok)return r;if(!best||r.score>best.score)best=r;}return best||this.run(this.randomThrow());}
   roll(force,o){const res=this.simulate(o);this.pending={res,force:force||[]};if(this.dice[0].outer.visible&&!this.fade){this.fade=performance.now();this.play=null;}else if(!this.fade)this.start();this.dirty=true;return res.info;}
   start(){const{res,force}=this.pending;this.pending=null;const vals=[],q=new THREE.Quaternion(),up=new THREE.Vector3();
     res.final.forEach((f,i)=>{q.set(f[3],f[4],f[5],f[6]).invert();up.set(0,1,0).applyQuaternion(q);let k=0,bd=-2;FACE_N.forEach((n,j)=>{const d=n.dot(up);if(d>bd){bd=d;k=j;}});
@@ -103,7 +113,7 @@ export class DiceRoller{
     this.mats.forEach(m=>m.opacity=1);this.dice.forEach(d=>{d.outer.visible=true;d.blob.visible=true;});this.play={res,t0:performance.now(),vals};}
   loop(now){this.raf=requestAnimationFrame(this.loop);
     if(this.fade){const k=(now-this.fade)/240;if(k>=1){this.fade=null;this.start();}else{this.mats.forEach(m=>m.opacity=1-k);this.dice.forEach(d=>{d.outer.position.y+=.04;d.blob.material.opacity*=.9;});this.renderer.render(this.scene,this.cam);return;}}
-    if(this.play){const P=this.play,f=(now-P.t0)/1000*FPS,q1=new THREE.Quaternion(),q2=new THREE.Quaternion();let done=true;
+    if(this.play){const P=this.play,f=Math.max(0,(now-P.t0)/1000*FPS),/* rAF-tijd kan vóór t0 liggen: niet negatief */q1=new THREE.Quaternion(),q2=new THREE.Quaternion();let done=true;
       P.res.frames.forEach((fr,i)=>{const L=fr.length,j=Math.min(Math.floor(f),L-2),u=cl(f-j,0,1),a=fr[j],b=fr[j+1],d=this.dice[i];if(f<L-1)done=false;
         d.outer.position.set(a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u);q1.set(a[3],a[4],a[5],a[6]);q2.set(b[3],b[4],b[5],b[6]);d.outer.quaternion.slerpQuaternions(q1,q2,u);
         const y=d.outer.position.y;d.blob.position.x=d.outer.position.x+.06;d.blob.position.z=d.outer.position.z+.06;d.blob.material.opacity=.5*cl(1-(y-.5)/3,0,1);d.blob.scale.setScalar(1+Math.max(0,y-.5)*.25);});
