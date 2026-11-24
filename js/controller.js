@@ -78,23 +78,42 @@ function renderAction() {
   btn.style.color = p ? textOn(p.color) : "";
 
   if (ui.phase === "roll") {
-    btn.textContent = "Dobbelen";
+    setButtonText(btn, "Dobbelen", "");
     btn.disabled = false;
   } else if (ui.phase === "rolled") {
     const left = Math.ceil((ui.unlockAt - Date.now()) / 1000);
     if (left > 0) {
-      btn.textContent = `Beurt eindigen (${left})`;
+      setButtonText(btn, "Beurt eindigen", `nog ${left} s`);
       btn.disabled = true;
       countdownTimer = setTimeout(renderAction, 200);
     } else {
-      btn.textContent = "Beurt eindigen";
+      setButtonText(btn, "Beurt eindigen", "");
       btn.disabled = false;
     }
   } else {
-    btn.textContent = "Wachten…";
+    setButtonText(btn, "Wachten…", "");
     btn.disabled = true;
   }
 }
+
+// Knop met vaste maat: hoofdtekst + kleine regel eronder. Past de tekst niet, dan krimpt de letter, niet de knop.
+function setButtonText(btn, label, sub) {
+  const labelEl = btn.querySelector(".btn-label");
+  btn.querySelector(".btn-sub").textContent = sub;
+  if (labelEl.textContent === label) return;
+  labelEl.textContent = label;
+  labelEl.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(labelEl).fontSize);
+  while (labelEl.scrollWidth > labelEl.clientWidth && size > 12) {
+    size -= 1;
+    labelEl.style.fontSize = `${size}px`;
+  }
+}
+
+window.addEventListener("resize", () => {
+  $("btn-action").querySelector(".btn-label").textContent = "";
+  renderAction();
+});
 
 $("btn-action").addEventListener("click", () => {
   if (!conn?.open) return;

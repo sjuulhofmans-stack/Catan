@@ -215,17 +215,37 @@ function renderTestControls() {
 
   const left = Math.ceil((lockUntil - Date.now()) / 1000);
   if (phase === "roll") {
-    btn.textContent = "Dobbelen";
+    setButtonText(btn, "Dobbelen", "");
     btn.disabled = false;
   } else if (left > 0) {
-    btn.textContent = `Beurt eindigen (${left})`;
+    setButtonText(btn, "Beurt eindigen", `nog ${left} s`);
     btn.disabled = true;
     testCountdown = setTimeout(renderTestControls, 200);
   } else {
-    btn.textContent = "Beurt eindigen";
+    setButtonText(btn, "Beurt eindigen", "");
     btn.disabled = false;
   }
 }
+
+// Knop met vaste maat: hoofdtekst + kleine regel eronder. Past de tekst niet, dan krimpt de letter, niet de knop.
+function setButtonText(btn, label, sub) {
+  const labelEl = btn.querySelector(".btn-label");
+  btn.querySelector(".btn-sub").textContent = sub;
+  if (labelEl.textContent === label) return;
+  labelEl.textContent = label;
+  labelEl.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(labelEl).fontSize);
+  while (labelEl.scrollWidth > labelEl.clientWidth && size > 8) {
+    size -= 1;
+    labelEl.style.fontSize = `${size}px`;
+  }
+}
+
+// Bij een andere schermmaat (bijv. fullscreen) de letter opnieuw passend maken
+window.addEventListener("resize", () => {
+  $("btn-test-action").querySelector(".btn-label").textContent = "";
+  renderTestControls();
+});
 
 $("btn-test-action").addEventListener("click", (e) => {
   mainAction();

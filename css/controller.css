@@ -81,6 +81,36 @@ h1 { font-size: 18px; color: var(--muted); }
 }
 
 .action:active:not(:disabled) { transform: scale(0.96); }
+
+/* Vaste maat: hoofdtekst op één regel (krimpt zo nodig), aftellen eronder in een vaste regel */
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+.action .btn-label {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1.15;
+}
+
+.action .btn-sub {
+  display: block;
+  height: 26px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 26px;
+  white-space: nowrap;
+}
+
+.turn-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .status { margin: 0; color: var(--muted); min-height: 1.4em; }
 
 /* Uitgeschakelde knop: massief grijs i.p.v. doorzichtig */
