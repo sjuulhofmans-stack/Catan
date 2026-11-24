@@ -152,10 +152,13 @@ const Sea = (() => {
       float k = 6.2831853 / 0.22;                                   // afstand tussen de golflijnen
       float bend = gnoise(bp * 1.3) * 1.2 + gnoise(bp * 3.1 + 2.0) * 0.4; // golflijnen niet perfect evenwijdig
       float wave = 0.5 + 0.5 * sin(d * k + t * w + bend * 3.0);
-      float crest = smoothstep(0.82, 1.0, wave);
-      float waveZone = smoothstep(0.65, 0.15, d) * smoothstep(0.0, 0.05, d);
-      float breakup = smoothstep(0.25, 0.65, gnoise(bp * 4.0 + vec2(t * 0.01, 0.0)) * 0.5 + 0.5);
-      float rollers = crest * waveZone * mix(0.35, 1.0, breakup);
+      float crest = smoothstep(0.86, 1.0, wave);
+      // verder van de kust vervagen de golven; vlakbij worden ze duidelijker
+      float waveZone = pow(smoothstep(0.55, 0.04, d), 1.6) * smoothstep(0.0, 0.05, d);
+      // golflijnen onderbroken, zoals echte golven die niet overal tegelijk breken
+      float breakup = smoothstep(0.42, 0.72, gnoise(bp * 2.5 + vec2(t * 0.008, 0.0)) * 0.5 + 0.5
+                                            + 0.25 * gnoise(bp * 7.0));
+      float rollers = crest * waveZone * breakup;
 
       // Branding: zachte schuimrand die in hetzelfde ritme op en neer spoelt
       float swash = 0.5 + 0.5 * sin(t * w + bend * 3.0);

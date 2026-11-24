@@ -1,0 +1,10 @@
+Dobbelstenen · 2× D6
+
+modellen/   GLB-modellen (1×1×1, afgeronde hoeken): rood met gele pips en geel met rode pips.
+            Te openen in Blender, Unity, Unreal, Reality Composer, three.js, enz.
+textures/   Per kleur 6 vlakken (1024×1024): _kleur.png = kleur, _bump.png = diepte van de pips.
+            Tegenover liggende vlakken tellen op tot 7.
+code/dice.js  De rolanimatie (three.js + cannon-es). Elke worp wordt live gesimuleerd,
+            dus er zijn geen vaste animatiebestanden: iedere worp is anders.
+            Gebruik: new DiceRoller(element).roll()   vaste uitkomst: roll([3,5])
+            Uitkomst: window-event 'dice-result' met {a, b, sum}.
