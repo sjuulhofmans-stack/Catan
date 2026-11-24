@@ -59,14 +59,14 @@ const Sea = (() => {
     float height(vec2 p, float t) {
       float h = 0.0;
       // zeer trage, lange deining
-      h += 0.20 * sin(dot(p, vec2(0.86, 0.50)) * 2.0 + t * 0.25);
-      h += 0.12 * sin(dot(p, vec2(-0.40, 0.92)) * 2.8 + t * 0.32);
-      // fijne oppervlaktestructuur die nauwelijks verschuift
-      vec2 q = p * 3.0 + vec2(t * 0.020, t * 0.012);
+      h += 0.20 * sin(dot(p, vec2(0.86, 0.50)) * 2.0 + t * 0.55);
+      h += 0.12 * sin(dot(p, vec2(-0.40, 0.92)) * 2.8 + t * 0.70);
+      // fijne oppervlaktestructuur die rustig verschuift
+      vec2 q = p * 3.0 + vec2(t * 0.045, t * 0.028);
       float a = 0.3;
       for (int i = 0; i < 4; i++) {
         h += a * gnoise(q);
-        q = ROT * q + vec2(t * 0.025, -t * 0.015);
+        q = ROT * q + vec2(t * 0.055, -t * 0.035);
         a *= 0.5;
       }
       return h;
@@ -128,7 +128,7 @@ const Sea = (() => {
       col = mix(col, vec3(0.50, 0.78, 0.70), (1.0 - smoothstep(0.0, 0.2, depth)) * 0.35 * uShore);
 
       // Grote vlekken (windvelden) die heel langzaam verschuiven
-      float patches = gnoise(bp * 0.22 + vec2(t * 0.004, t * 0.003)) + 0.5 * gnoise(bp * 0.5 - t * 0.005);
+      float patches = gnoise(bp * 0.22 + vec2(t * 0.009, t * 0.006)) + 0.5 * gnoise(bp * 0.5 - t * 0.011);
       col *= 0.92 + 0.3 * patches;
 
       // Licht
@@ -147,8 +147,8 @@ const Sea = (() => {
       col += vec3(1.0, 0.95, 0.85) * spec * (0.08 + 0.8 * glitterZone);
       col += vec3(0.10, 0.12, 0.12) * glitterZone;
 
-      // Golven die langzaam op de kust aanrollen (periode ~9 s, ruim een tegel per 40 s)
-      float w = 6.2831853 / 9.0;
+      // Golven die rustig op de kust aanrollen (periode ~5 s)
+      float w = 6.2831853 / 5.0;
       float k = 6.2831853 / 0.22;                                   // afstand tussen de golflijnen
       float bend = gnoise(bp * 1.3) * 1.2 + gnoise(bp * 3.1 + 2.0) * 0.4; // golflijnen niet perfect evenwijdig
       float wave = 0.5 + 0.5 * sin(d * k + t * w + bend * 3.0);

@@ -477,6 +477,13 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 
 .side-menu button:hover { background: rgba(255, 255, 255, 0.14); border-color: var(--accent); }
 
+/* ---------- 3D-dobbelstenen ---------- */
+.dice-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 /* ---------- Testbord-knop (onderin het midden) ---------- */
 .test-controls {
   position: absolute;
@@ -556,8 +563,9 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 .toast {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  top: 4vmin; /* bovenaan, zodat de uitslag de dobbelstenen niet bedekt */
+  transform: translateX(-50%);
+  z-index: 6;
   padding: 2vmin 4vmin;
   font-size: 4vmin;
   font-weight: 600;

@@ -266,15 +266,56 @@ function updateTimer() {
 // ---------- Dobbelen ----------
 function roll() {
   if (!gameStarted || phase !== "roll") return;
-  // Tijdelijk: simpele uitslag. De rollende dobbelstenen komen in een latere stap.
+  // Het bord bepaalt de uitslag; de 3D-stenen worden zo gegooid dat ze daarop landen
   const d1 = 1 + Math.floor(Math.random() * 6);
   const d2 = 1 + Math.floor(Math.random() * 6);
   const player = currentPlayer();
-  showToast(`${player ? player.name : "Worp"}: ${d1} + ${d2} = ${d1 + d2}`);
+  const resultText = `${player ? player.name : "Worp"}: ${d1} + ${d2} = ${d1 + d2}`;
   phase = "rolled";
   lockUntil = Date.now() + END_TURN_LOCK_MS;
   if (gameConfig.timer.enabled) startTimer();
   broadcastState();
+  if (!throwDice(player, [d1, d2], () => showToast(resultText))) showToast(resultText);
+}
+
+// ---------- Dobbelstenen (3D, js/dice-roller.js) ----------
+// Formaat: een steen is ongeveer 0,42 tegelbreedte. Ze worden gegooid vanuit de hoek van de speler
+// en landen binnen het bord. Zonder internet/three.js valt het terug op alleen de tekst.
+const DIE_SIZE_IN_TILES = 0.42;
+const LAND_RADIUS = 3.0; // in tegelstralen vanaf het midden: ruim binnen het eiland
+const SEAT_DIR = { tl: [-1, -1], tr: [1, -1], bl: [-1, 1], br: [1, 1] };
+let diceRoller = null;
+
+function diceGeometry() {
+  const m = $("board").getScreenCTM();
+  if (!m || !innerWidth) return null;
+  const view = innerWidth / (DIE_SIZE_IN_TILES * Math.sqrt(3) * m.a); // wereldbreedte van het scherm, 1 = steen
+  return { view, landR: (LAND_RADIUS * m.a * view) / innerWidth };
+}
+
+function updateDiceView() {
+  const g = diceGeometry();
+  if (diceRoller && g) diceRoller.setView(g.view);
+}
+window.addEventListener("resize", updateDiceView);
+
+function throwDice(player, values, onLanded) {
+  if (!diceRoller && window.DiceRoller) {
+    try {
+      diceRoller = new window.DiceRoller($("dice-layer"));
+      updateDiceView();
+    } catch (err) {
+      console.warn("Dobbelstenen konden niet starten:", err);
+      return false;
+    }
+  }
+  const g = diceGeometry();
+  if (!diceRoller || !g) return false;
+  const [sx, sz] = SEAT_DIR[player?.seat] ?? [0, 1];
+  const from = Math.atan2(sz * diceRoller.hz, sx * diceRoller.hx); // richting van het midden naar de hoek
+  diceRoller.onResult = onLanded;
+  diceRoller.roll(values, { from, landR: g.landR });
+  return true;
 }
 
 // Eén knop: dobbelen, of (na 5 s) beurt eindigen
@@ -368,6 +409,7 @@ function goToMainMenu() {
   gameStarted = false;
   resetTurns();
   Sea.setShore(false);
+  diceRoller?.hide();
   Lobby.close();
   $("table").classList.add("hidden");
   setTimeout(() => {
