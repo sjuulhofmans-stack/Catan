@@ -531,7 +531,10 @@ body.game-started .token {
   height: 100%;
   display: block;
   pointer-events: none;
+  mix-blend-mode: screen; /* licht telt op bij de tegels */
 }
+.tile image { transition: filter 0.35s ease; }
+.tile.dimmed image { filter: brightness(0.45) saturate(0.7); }
 
 /* ---------- 3D-dobbelstenen ---------- */
 .dice-layer {

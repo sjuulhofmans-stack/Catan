@@ -98,6 +98,10 @@
 
     <svg id="board" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
 
+    <!-- Lichtlaag na een worp (js/glow.js), tussen tegels en nummerfiches -->
+    <canvas id="glow" aria-hidden="true"></canvas>
+    <svg id="tokens" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+
     <!-- 3D-dobbelstenen boven het bord (canvas wordt door js/dice-roller.js toegevoegd) -->
     <div id="dice-layer" class="dice-layer" aria-hidden="true"></div>
 
@@ -141,6 +145,7 @@
   <script src="js/board.js?v=24"></script>
   <script src="js/sea.js?v=24"></script>
   <script src="js/boats.js?v=24"></script>
+  <script src="js/glow.js?v=24"></script>
   <script src="js/lobby.js?v=24"></script>
   <script src="js/settings.js?v=24"></script>
   <script src="js/main.js?v=24"></script>

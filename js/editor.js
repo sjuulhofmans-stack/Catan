@@ -3,8 +3,6 @@
 const Editor = (() => {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const STORAGE_KEY = "hexbord-editor-map";
-  const TILE_PATH = "assets/tiles/land/";
-  const VARIANTS = 6;
   const SIZE = 1;
 
   // Bordvormen als kolomlengtes (flat-top: kolommen van links naar rechts)
@@ -16,19 +14,39 @@ const Editor = (() => {
   ];
   const DEFAULT_SHAPE = "uitbreiding";
 
-  const TERRAINS = [
-    { id: "hout",     name: "Hout" },
-    { id: "wol",      name: "Wol" },
-    { id: "graan",    name: "Graan" },
-    { id: "steen",    name: "Steen" },
-    { id: "erts",     name: "Erts" },
-    { id: "goud",     name: "Goud" },
-    { id: "woestijn", name: "Woestijn" },
-    { id: "meer",     name: "Meer" },
-    { id: "vulkaan",  name: "Vulkaan" },
-  ];
+  // Richtingen van de buren (flat-top). Index i hoort bij "stand" i+1 van de zee- en haventegels:
+  // stand 1 = kust boven, 2 = rechtsboven, 3 = rechtsonder, 4 = onder, 5 = linksonder, 6 = linksboven.
+  const DIRS = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]];
 
-  const NEIGHBORS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+  // Tegelcatalogus.
+  //   land:   6 varianten (willekeurig, scroll wisselt)
+  //   coast:  12 standen: 1-6 = één kustzijde (kust1), 7-12 = twee kustzijden (kust2)
+  //   harbor: 6 standen (steiger richting land)
+  //   sea:    open zee, geen afbeelding (de zee eronder blijft zichtbaar)
+  const HARBOR_TYPES = [
+    ["algemeen", "Haven 3:1"], ["hout", "Haven hout"], ["wol", "Haven wol"],
+    ["graan", "Haven graan"], ["steen", "Haven steen"], ["erts", "Haven erts"],
+  ];
+  const TILES = [
+    ...[
+      ["hout", "Hout"], ["wol", "Wol"], ["graan", "Graan"], ["steen", "Steen"], ["erts", "Erts"],
+      ["goud", "Goud"], ["woestijn", "Woestijn"], ["meer", "Meer"], ["vulkaan", "Vulkaan"],
+    ].map(([id, name]) => ({ id, name, kind: "land", count: 6, group: "land" })),
+    { id: "zee",  name: "Open zee", kind: "sea",   count: 1,  group: "zee" },
+    { id: "kust", name: "Kust",     kind: "coast", count: 12, group: "zee" },
+    ...HARBOR_TYPES.map(([t, name]) => ({ id: `haven_${t}`, name, kind: "harbor", count: 6, group: "zee" })),
+  ];
+  const TILE = Object.fromEntries(TILES.map((t) => [t.id, t]));
+  const ROTATES = (id) => TILE[id].kind === "coast" || TILE[id].kind === "harbor";
+
+  function tileSrc(id, variant) {
+    const t = TILE[id];
+    if (t.kind === "land") return `assets/tiles/land/${id}_${variant}.webp`;
+    if (t.kind === "coast") return variant <= 6 ? `assets/tiles/zee/kust1_${variant}.webp` : `assets/tiles/zee/kust2_${variant - 6}.webp`;
+    if (t.kind === "harbor") return `assets/tiles/zee/${id}_${variant}.webp`;
+    return null;
+  }
+
   const W = 2 * SIZE * 1.004;            // zelfde maat als in board.js (geen naadjes)
   const H = Math.sqrt(3) * SIZE * 1.004;
 
@@ -36,13 +54,13 @@ const Editor = (() => {
   const svg = $("ed-board");
 
   let shape = SHAPES.find((s) => s.id === DEFAULT_SHAPE);
-  let cells = new Map();   // key -> { q, r, center, corners, g }
-  let placed = new Map();  // key -> { terrain, variant }
-  let selected = null;     // terrain-id of null
+  let cells = new Map();   // key -> { q, r, center, corners, g, tile }
+  let placed = new Map();  // key -> { terrain, variant, auto }
+  let selected = null;     // tegel-id of null
   let drag = null;         // null | "place" | "erase"
   let hoverKey = null;
 
-  let layerCells, layerTiles, layerFx, ghost, hoverRing;
+  let layerCells, layerTiles, layerFx, ghost, ghostWater, hoverRing;
 
   // ---------- Hulpjes ----------
   function el(name, attrs = {}) {
@@ -51,8 +69,9 @@ const Editor = (() => {
     return node;
   }
 
-  const tileSrc = (terrain, variant) => `${TILE_PATH}${terrain}_${variant}.webp`;
   const pointsOf = (corners) => corners.map((c) => `${c.x},${c.y}`).join(" ");
+  const neighborKey = (cell, i) => `${cell.q + DIRS[i][0]},${cell.r + DIRS[i][1]}`;
+  const isLand = (key) => TILE[placed.get(key)?.terrain]?.kind === "land";
 
   // Kolommen -> axiale coördinaten, verticaal gecentreerd. Basis (3-4-5-4-3) geeft dezelfde
   // sleutels als Hex.generateHexagon(2) in het spel.
@@ -75,7 +94,7 @@ const Editor = (() => {
       columns: shape.columns,
       tiles: [...placed].map(([key, t]) => {
         const [q, r] = key.split(",").map(Number);
-        return { q, r, terrain: t.terrain, variant: t.variant };
+        return { q, r, terrain: t.terrain, variant: t.variant, ...(ROTATES(t.terrain) && !t.auto ? { auto: false } : {}) };
       }),
     };
   }
@@ -88,9 +107,10 @@ const Editor = (() => {
     shape = SHAPES.find((s) => s.id === data?.shape) ?? SHAPES.find((s) => s.id === DEFAULT_SHAPE);
     placed = new Map();
     for (const t of data?.tiles ?? []) {
-      if (!TERRAINS.some((x) => x.id === t.terrain)) continue;
-      const variant = Math.min(VARIANTS, Math.max(1, t.variant | 0 || 1));
-      placed.set(`${t.q},${t.r}`, { terrain: t.terrain, variant });
+      const def = TILE[t.terrain];
+      if (!def) continue;
+      const variant = Math.min(def.count, Math.max(1, t.variant | 0 || 1));
+      placed.set(`${t.q},${t.r}`, { terrain: t.terrain, variant, auto: t.auto !== false });
     }
   }
 
@@ -103,12 +123,13 @@ const Editor = (() => {
     layerFx = el("g", { class: "ed-fx" });
     ghost = el("image", { class: "ed-ghost", width: W, height: H, preserveAspectRatio: "none" });
     ghost.style.display = "none";
+    ghostWater = el("polygon", { class: "ed-ghost ed-water" });
+    ghostWater.style.display = "none";
     hoverRing = el("polygon", { class: "ed-hover" });
     hoverRing.style.display = "none";
 
     const all = [];
-    const hexes = shapeHexes(shape.columns);
-    for (const hex of hexes) {
+    for (const hex of shapeHexes(shape.columns)) {
       const key = Hex.key(hex);
       const center = Hex.toPixel(hex, SIZE);
       const corners = Hex.corners(center, SIZE * 0.96);
@@ -133,7 +154,7 @@ const Editor = (() => {
     const minX = Math.min(...xs) - p, minY = Math.min(...ys) - p;
     svg.setAttribute("viewBox", `${minX} ${minY} ${Math.max(...xs) + p - minX} ${Math.max(...ys) + p - minY}`);
 
-    svg.append(layerCells, layerTiles, ghost, layerFx, hoverRing);
+    svg.append(layerCells, layerTiles, ghost, ghostWater, layerFx, hoverRing);
     for (const [key, t] of placed) {
       drawTile(key, t);
       cells.get(key).tile.style.animationDelay = `${300 + Hex.distance(cells.get(key), { q: 0, r: 0, s: 0 }) * 90}ms`;
@@ -147,23 +168,26 @@ const Editor = (() => {
   function drawTile(key, t, { animate = true } = {}) {
     const cell = cells.get(key);
     cell.tile?.remove();
-    const img = el("image", {
-      class: "ed-tile",
-      href: tileSrc(t.terrain, t.variant),
-      x: cell.center.x - W / 2,
-      y: cell.center.y - H / 2,
-      width: W,
-      height: H,
-      preserveAspectRatio: "none",
-      "data-key": key,
+    const src = tileSrc(t.terrain, t.variant);
+    const node = src
+      ? el("image", {
+          href: src,
+          x: cell.center.x - W / 2,
+          y: cell.center.y - H / 2,
+          width: W,
+          height: H,
+          preserveAspectRatio: "none",
+        })
+      : el("polygon", { class: "ed-water", points: pointsOf(Hex.corners(cell.center, SIZE)) });
+    node.classList.add("ed-tile");
+    node.dataset.key = key;
+    if (animate) node.classList.add("drop");
+    node.addEventListener("animationend", () => {
+      node.classList.remove("drop", "swap");
+      node.style.animationDelay = "";
     });
-    if (animate) img.classList.add("drop");
-    img.addEventListener("animationend", () => {
-      img.classList.remove("drop", "swap");
-      img.style.animationDelay = "";
-    });
-    layerTiles.append(img);
-    cell.tile = img;
+    layerTiles.append(node);
+    cell.tile = node;
     cell.g.classList.add("filled");
   }
 
@@ -173,56 +197,101 @@ const Editor = (() => {
     layerFx.append(poly);
   }
 
-  // ---------- Tegels leggen / weghalen ----------
-  // Variant kiezen die niet al bij een buurtegel van hetzelfde type ligt
+  // ---------- Varianten en standen ----------
+  // Land: variant die niet al bij een buurtegel van hetzelfde type ligt
   function pickVariant(key, terrain) {
     const cell = cells.get(key);
     const taken = new Set();
-    for (const [dq, dr] of NEIGHBORS) {
-      const n = placed.get(`${cell.q + dq},${cell.r + dr}`);
+    for (let i = 0; i < 6; i++) {
+      const n = placed.get(neighborKey(cell, i));
       if (n?.terrain === terrain) taken.add(n.variant);
     }
-    const free = [];
-    for (let v = 1; v <= VARIANTS; v++) if (!taken.has(v)) free.push(v);
+    const free = [1, 2, 3, 4, 5, 6].filter((v) => !taken.has(v));
     const pool = free.length ? free : [1, 2, 3, 4, 5, 6];
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  // Kust/haven: stand die naar het aangrenzende land wijst (null = geen land ernaast)
+  function orient(key, terrain) {
+    const cell = cells.get(key);
+    const land = DIRS.map((_, i) => isLand(neighborKey(cell, i)));
+    if (TILE[terrain].kind === "coast") {
+      // Twee kustzijden: stand j bedekt richting j-2 en j-1 (stand 1 = linksboven + boven)
+      for (let j = 1; j <= 6; j++) {
+        if (land[(j + 4) % 6] && land[j - 1]) return 6 + j;
+      }
+    }
+    const i = land.indexOf(true);
+    return i >= 0 ? i + 1 : null;
+  }
+
+  function newTile(key, terrain) {
+    const def = TILE[terrain];
+    if (def.kind === "land") return { terrain, variant: pickVariant(key, terrain), auto: true };
+    if (ROTATES(terrain)) return { terrain, variant: orient(key, terrain) ?? 1, auto: true };
+    return { terrain, variant: 1, auto: true };
+  }
+
+  // Na een wijziging in het land: automatisch gedraaide kust/havens rondom bijwerken
+  function reorientAround(key) {
+    const cell = cells.get(key);
+    for (let i = 0; i < 6; i++) {
+      const nk = neighborKey(cell, i);
+      const t = placed.get(nk);
+      if (!t || !t.auto || !ROTATES(t.terrain)) continue;
+      const v = orient(nk, t.terrain);
+      if (v && v !== t.variant) setVariant(nk, v);
+    }
+  }
+
+  function setVariant(key, variant) {
+    const t = placed.get(key);
+    t.variant = variant;
+    const img = cells.get(key).tile;
+    img.setAttribute("href", tileSrc(t.terrain, variant));
+    img.classList.remove("swap");
+    void img.getBBox(); // animatie opnieuw starten
+    img.classList.add("swap");
+  }
+
+  // ---------- Tegels leggen / weghalen ----------
   function place(key) {
     if (!selected || placed.has(key)) return;
-    const t = { terrain: selected, variant: pickVariant(key, selected) };
+    const t = newTile(key, selected);
     placed.set(key, t);
     drawTile(key, t);
     ripple(cells.get(key), "place");
+    if (TILE[t.terrain].kind === "land") reorientAround(key);
     changed();
   }
 
   function erase(key) {
     const cell = cells.get(key);
-    if (!placed.has(key)) return;
+    const t = placed.get(key);
+    if (!t) return;
     placed.delete(key);
     cell.g.classList.remove("filled");
-    const img = cell.tile;
+    const node = cell.tile;
     cell.tile = null;
-    if (img) {
-      img.classList.remove("drop", "swap");
-      img.classList.add("lift");
-      img.addEventListener("animationend", () => img.remove(), { once: true });
-      setTimeout(() => img.remove(), 600); // terugval als de animatie niet afgaat
+    if (node) {
+      node.classList.remove("drop", "swap");
+      node.classList.add("lift");
+      node.addEventListener("animationend", () => node.remove(), { once: true });
+      setTimeout(() => node.remove(), 600); // terugval als de animatie niet afgaat
     }
     ripple(cell, "erase");
+    if (TILE[t.terrain].kind === "land") reorientAround(key);
     changed();
   }
 
+  // Scrollen: land = andere variant, kust/haven = draaien (daarna niet meer automatisch)
   function cycleVariant(key, dir) {
     const t = placed.get(key);
-    if (!t) return;
-    t.variant = ((t.variant - 1 + dir + VARIANTS) % VARIANTS) + 1;
-    const img = cells.get(key).tile;
-    img.setAttribute("href", tileSrc(t.terrain, t.variant));
-    img.classList.remove("swap");
-    void img.getBBox(); // animatie opnieuw starten
-    img.classList.add("swap");
+    const count = TILE[t?.terrain]?.count ?? 1;
+    if (!t || count < 2) return;
+    t.auto = false;
+    setVariant(key, ((t.variant - 1 + dir + count) % count) + 1);
+    updateHover();
     save();
   }
 
@@ -233,9 +302,9 @@ const Editor = (() => {
     updateHover();
   }
 
-  // De kust van de zee volgt alleen de gelegde tegels
+  // De kust van de zee volgt alleen de gelegde landtegels
   function updateSea() {
-    const tiles = [...placed.keys()].map((key) => ({ center: cells.get(key).center }));
+    const tiles = [...placed].filter(([key]) => isLand(key)).map(([key]) => ({ center: cells.get(key).center }));
     Sea.setBoard(svg, { size: SIZE, tiles }, { exactRange: 8 });
     Sea.setShore(tiles.length > 0);
   }
@@ -268,23 +337,32 @@ const Editor = (() => {
     if (dropped) toast(`${dropped} ${dropped === 1 ? "tegel viel" : "tegels vielen"} buiten het nieuwe bord`);
   }
 
+  // Sneltoetsen: 1-9 voor land
+  const HOTKEYS = TILES.filter((t) => t.group === "land").map((t) => t.id);
+
   function renderPalette() {
-    const wrap = $("ed-palette");
-    wrap.replaceChildren();
-    TERRAINS.forEach((t, i) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "ed-swatch";
-      b.dataset.terrain = t.id;
-      b.title = `${t.name} (${i + 1})`;
-      b.innerHTML = `
-        <span class="ed-swatch-img"><img alt="" draggable="false" src="${tileSrc(t.id, 1)}"></span>
-        <span class="ed-swatch-name">${t.name}</span>
-        <span class="ed-swatch-key">${i + 1}</span>
-        <span class="ed-swatch-count"></span>`;
-      b.addEventListener("click", () => select(selected === t.id ? null : t.id));
-      wrap.append(b);
-    });
+    for (const group of ["land", "zee"]) {
+      const wrap = $(`ed-palette-${group}`);
+      wrap.replaceChildren();
+      for (const t of TILES.filter((x) => x.group === group)) {
+        const hot = HOTKEYS.indexOf(t.id) + 1;
+        // Voorbeeld: kust met twee zijden, haven met de steiger naar boven
+        const preview = tileSrc(t.id, t.kind === "coast" ? 8 : 1);
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ed-swatch";
+        b.dataset.terrain = t.id;
+        b.title = hot ? `${t.name} (${hot})` : t.name;
+        b.innerHTML = `
+          <span class="ed-swatch-img">${preview ? `<img alt="" draggable="false" src="${preview}">` : `<span class="ed-swatch-water"></span>`}</span>
+          <span class="ed-swatch-name"></span>
+          ${hot ? `<span class="ed-swatch-key">${hot}</span>` : ""}
+          <span class="ed-swatch-count"></span>`;
+        b.querySelector(".ed-swatch-name").textContent = t.name;
+        b.addEventListener("click", () => select(selected === t.id ? null : t.id));
+        wrap.append(b);
+      }
+    }
   }
 
   function select(terrain) {
@@ -309,19 +387,26 @@ const Editor = (() => {
   // ---------- Aanwijzen: spooktegel op een leeg vak ----------
   function updateHover() {
     const cell = hoverKey && cells.get(hoverKey);
-    if (!cell) { ghost.style.display = "none"; hoverRing.style.display = "none"; return; }
+    ghost.style.display = "none";
+    ghostWater.style.display = "none";
+    if (!cell) { hoverRing.style.display = "none"; return; }
     const filled = placed.has(hoverKey);
     hoverRing.setAttribute("points", pointsOf(cell.corners));
     hoverRing.classList.toggle("erase", filled);
     hoverRing.classList.toggle("place", !filled && Boolean(selected));
     hoverRing.style.display = "";
-    if (selected && !filled) {
-      ghost.setAttribute("href", tileSrc(selected, 1));
+    if (!selected || filled) return;
+
+    const preview = newTile(hoverKey, selected);
+    const src = tileSrc(selected, TILE[selected].kind === "land" ? 1 : preview.variant);
+    if (src) {
+      ghost.setAttribute("href", src);
       ghost.setAttribute("x", cell.center.x - W / 2);
       ghost.setAttribute("y", cell.center.y - H / 2);
       ghost.style.display = "";
     } else {
-      ghost.style.display = "none";
+      ghostWater.setAttribute("points", pointsOf(Hex.corners(cell.center, SIZE)));
+      ghostWater.style.display = "";
     }
   }
 
@@ -371,10 +456,11 @@ const Editor = (() => {
 
   // Geklikt zonder tegel gekozen: het palet even laten oplichten
   function nudgePalette() {
-    const pal = $("ed-palette");
-    pal.classList.remove("nudge");
-    void pal.offsetWidth;
-    pal.classList.add("nudge");
+    document.querySelectorAll(".ed-palette").forEach((pal) => {
+      pal.classList.remove("nudge");
+      void pal.offsetWidth;
+      pal.classList.add("nudge");
+    });
     toast("Kies eerst een tegel links");
   }
 
@@ -439,7 +525,7 @@ const Editor = (() => {
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const n = parseInt(e.key, 10);
-      if (n >= 1 && n <= TERRAINS.length) select(TERRAINS[n - 1].id);
+      if (n >= 1 && n <= HOTKEYS.length) select(HOTKEYS[n - 1]);
       else if (e.key === "Escape" || e.key === "0") select(null);
       else if (e.key === "f" || e.key === "F") toggleFullscreen();
     });
@@ -475,5 +561,5 @@ const Editor = (() => {
   }
 
   init();
-  return { serialize, get map() { return serialize(); }, STORAGE_KEY };
+  return { serialize, get map() { return serialize(); }, STORAGE_KEY, TILES };
 })();

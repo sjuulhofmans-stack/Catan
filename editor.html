@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kaarteditor · De kolonisten van Gennep</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=23">
-  <link rel="stylesheet" href="css/editor.css?v=23">
+  <link rel="stylesheet" href="css/style.css?v=24">
+  <link rel="stylesheet" href="css/editor.css?v=24">
 </head>
 <body class="editor">
   <canvas id="sea" aria-hidden="true"></canvas>
@@ -23,12 +23,17 @@
       <div id="ed-shapes" class="ed-shapes"></div>
     </section>
 
-    <section class="ed-section ed-grow">
+    <section class="ed-section">
       <div class="ed-label-row">
-        <h2 class="ed-label">Tegels</h2>
+        <h2 class="ed-label">Land</h2>
         <span id="ed-count" class="ed-count"></span>
       </div>
-      <div id="ed-palette" class="ed-palette"></div>
+      <div id="ed-palette-land" class="ed-palette"></div>
+    </section>
+
+    <section class="ed-section ed-grow">
+      <h2 class="ed-label">Zee &amp; havens</h2>
+      <div id="ed-palette-zee" class="ed-palette ed-palette-zee"></div>
     </section>
 
     <section class="ed-section">
@@ -44,7 +49,8 @@
 
     <p class="ed-tips">
       <b>Klik</b> leg tegel · <b>klik</b> op tegel haalt weg<br>
-      <b>Slepen</b> meerdere tegels · <b>scroll</b> andere variant<br>
+      <b>Slepen</b> meerdere tegels · <b>scroll</b> variant / draaien<br>
+      Kust en havens draaien vanzelf naar het land<br>
       <b>1–9</b> kies tegel · <b>Esc</b> loslaten · <b>F</b> fullscreen
     </p>
   </aside>
@@ -55,8 +61,8 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="js/hex.js?v=23"></script>
-  <script src="js/sea.js?v=23"></script>
-  <script src="js/editor.js?v=23"></script>
+  <script src="js/hex.js?v=24"></script>
+  <script src="js/sea.js?v=24"></script>
+  <script src="js/editor.js?v=24"></script>
 </body>
 </html>

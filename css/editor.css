@@ -16,16 +16,18 @@ body.editor {
   left: 0;
   z-index: 5;
   width: var(--panel-w);
-  padding: 22px 20px 16px;
+  padding: 20px 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   overflow-y: auto;
   background: linear-gradient(180deg, #131b18 0%, var(--ed-panel) 60%);
   border-right: 1px solid var(--ed-line);
   box-shadow: 8px 0 40px rgba(0, 0, 0, 0.55);
   animation: ed-slide-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+
+.ed-panel { scrollbar-width: thin; scrollbar-color: #33413b transparent; }
 
 @keyframes ed-slide-in {
   from { transform: translateX(-100%); }
@@ -91,8 +93,8 @@ body.editor {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 4px 8px;
+  gap: 3px;
+  padding: 8px 4px 6px;
   background: var(--ed-card);
   border: 1px solid var(--ed-line);
   border-radius: 12px;
@@ -102,7 +104,7 @@ body.editor {
 .ed-swatch:active { transform: scale(0.96); }
 
 .ed-swatch-img {
-  width: 76%;
+  width: 66%;
   aspect-ratio: 2 / 1.732;
   display: grid;
   place-items: center;
@@ -154,8 +156,25 @@ body.editor {
   50%      { transform: scale(1.1) translateY(-3px); }
 }
 
+/* Zee-palet: 4 per rij, iets compacter */
+.ed-palette-zee { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ed-palette-zee .ed-swatch { padding: 8px 2px 6px; border-radius: 10px; }
+.ed-palette-zee .ed-swatch-img { width: 84%; }
+.ed-palette-zee .ed-swatch-name { font-size: 10.5px; line-height: 1.15; text-align: center; }
+
+/* Open zee: geen afbeelding, een zeshoek met water */
+.ed-swatch-water {
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(255, 255, 255, 0.25), transparent 55%),
+    linear-gradient(160deg, #2b86ad 0%, #0f4f78 100%);
+}
+
 /* Klik op het bord zonder gekozen tegel */
 .ed-palette.nudge .ed-swatch { animation: ed-nudge 0.6s ease; }
+.ed-palette-zee.nudge .ed-swatch { animation-delay: 0.12s; }
 .ed-palette.nudge .ed-swatch:nth-child(3n + 2) { animation-delay: 0.04s; }
 .ed-palette.nudge .ed-swatch:nth-child(3n) { animation-delay: 0.08s; }
 @keyframes ed-nudge {
@@ -263,6 +282,14 @@ body.ed-ready .ed-cell {
 }
 @keyframes ed-lift {
   to { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+}
+
+/* Open zee op het bord: donker water, zodat duidelijk is dat het vak bewust zee is */
+.ed-water {
+  fill: rgba(6, 40, 70, 0.45);
+  stroke: rgba(160, 215, 235, 0.35);
+  stroke-width: 0.025;
+  stroke-linejoin: round;
 }
 
 /* Spooktegel: voorproefje op het lege vak */

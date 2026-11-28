@@ -6,8 +6,10 @@ const model = Board.createModel({ radius: 2, size: 1 });
 
 // Nieuwe (voorlopig willekeurige) verdeling van de landtegels
 function newBoard() {
+  Glow.stop();
   Board.assignRandomTerrain(model);
-  Board.render($("board"), model);
+  Board.assignNumbers(model);
+  Board.render($("board"), model, { tokenSvg: $("tokens") });
 }
 newBoard();
 window.board = model; // handig om in de console te bekijken
@@ -16,6 +18,7 @@ window.board = model; // handig om in de console te bekijken
 Sea.init($("sea"));
 Sea.setBoard($("board"), model);
 Boats.init($("boats"), $("board"), model);
+Glow.init($("glow"), $("board"), $("tokens"), model);
 
 // ---------- Spelinstellingen ----------
 let gameConfig = null;
@@ -309,7 +312,31 @@ function roll() {
   lockUntil = Date.now() + END_TURN_LOCK_MS;
   if (gameConfig.timer.enabled) startTimer();
   broadcastState();
-  if (!throwDice(player, [d1, d2], () => showToast(resultText))) showToast(resultText);
+  const landed = () => { showToast(resultText); afterRoll(d1 + d2); };
+  if (!throwDice(player, [d1, d2], landed)) landed();
+}
+
+// Na de worp: stenen even laten liggen, wegvagen, dan de dans over het bord + finale op de tegel(s)
+const DICE_HOLD_MS = 700;
+const DICE_VANISH_MS = 450; // gelijk aan de transition van .dice-layer in style.css
+let afterRollTimers = [];
+
+function clearAfterRoll() {
+  afterRollTimers.forEach(clearTimeout);
+  afterRollTimers = [];
+  $("dice-layer").classList.remove("vanish");
+  Glow.stop();
+}
+
+function afterRoll(sum) {
+  clearAfterRoll();
+  if (!diceRoller) { Glow.play(sum); return; } // zonder 3D-stenen meteen de dans
+  afterRollTimers.push(setTimeout(() => $("dice-layer").classList.add("vanish"), DICE_HOLD_MS));
+  afterRollTimers.push(setTimeout(() => {
+    diceRoller.hide();
+    $("dice-layer").classList.remove("vanish");
+    if (gameStarted) Glow.play(sum);
+  }, DICE_HOLD_MS + DICE_VANISH_MS));
 }
 
 // ---------- Dobbelstenen (3D, js/dice-roller.js) ----------
@@ -345,6 +372,7 @@ function throwDice(player, values, onLanded) {
   }
   const g = diceGeometry();
   if (!diceRoller || !g) return false;
+  clearAfterRoll();
   const [sx, sz] = SEAT_DIR[player?.seat] ?? [0, 1];
   const from = Math.atan2(sz * diceRoller.hz, sx * diceRoller.hx); // richting van het midden naar de hoek
   diceRoller.onResult = onLanded;
@@ -444,6 +472,7 @@ function goToMainMenu() {
   resetTurns();
   Sea.setShore(false);
   diceRoller?.hide();
+  clearAfterRoll();
   setTimeout(() => { if (!gameStarted) Boats.stop(); }, 1000); // na het uitfaden van het bord
   Lobby.close();
   $("table").classList.add("hidden");
