@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>De kolonisten van Gennep</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=24">
 </head>
 <body>
   <canvas id="sea" aria-hidden="true"></canvas>
@@ -16,6 +16,7 @@
     <div class="menu">
       <button id="btn-new" type="button">Nieuw spel</button>
       <button id="btn-solo" type="button" class="secondary">Testbord</button>
+      <button id="btn-editor" type="button" class="secondary">Kaarteditor</button>
       <button type="button" class="secondary btn-fullscreen">Fullscreen</button>
     </div>
   </section>
@@ -92,6 +93,9 @@
 
   <!-- Spel -->
   <main id="table" class="hidden">
+    <!-- Bootjes op de zee (js/boats.js), onder het bord -->
+    <canvas id="boats" aria-hidden="true"></canvas>
+
     <svg id="board" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
 
     <!-- 3D-dobbelstenen boven het bord (canvas wordt door js/dice-roller.js toegevoegd) -->
@@ -133,12 +137,13 @@
 
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="js/hex.js?v=21"></script>
-  <script src="js/board.js?v=21"></script>
-  <script src="js/sea.js?v=21"></script>
-  <script src="js/lobby.js?v=21"></script>
-  <script src="js/settings.js?v=21"></script>
-  <script src="js/main.js?v=21"></script>
-  <script type="module" src="js/dice-roller.js?v=21"></script>
+  <script src="js/hex.js?v=24"></script>
+  <script src="js/board.js?v=24"></script>
+  <script src="js/sea.js?v=24"></script>
+  <script src="js/boats.js?v=24"></script>
+  <script src="js/lobby.js?v=24"></script>
+  <script src="js/settings.js?v=24"></script>
+  <script src="js/main.js?v=24"></script>
+  <script type="module" src="js/dice-roller.js?v=24"></script>
 </body>
 </html>

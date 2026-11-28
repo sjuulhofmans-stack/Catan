@@ -1,0 +1,315 @@
+/* ---------- Kaarteditor ---------- */
+body.editor {
+  --panel-w: clamp(270px, 23vw, 380px);
+  --ed-gold: var(--accent);
+  --ed-panel: #0f1513;
+  --ed-card: #18201d;
+  --ed-card-hover: #212b27;
+  --ed-line: #2c3833;
+}
+
+/* ---------- Paneel ---------- */
+.ed-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 5;
+  width: var(--panel-w);
+  padding: 22px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #131b18 0%, var(--ed-panel) 60%);
+  border-right: 1px solid var(--ed-line);
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.55);
+  animation: ed-slide-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes ed-slide-in {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+.ed-head { display: flex; flex-direction: column; gap: 2px; }
+.ed-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ed-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ed-gold);
+}
+
+.ed-section { display: flex; flex-direction: column; gap: 10px; }
+.ed-label-row { display: flex; align-items: baseline; justify-content: space-between; }
+.ed-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ed-count { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text); }
+
+/* Bordvorm */
+.ed-shapes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.ed-shape {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 9px 11px;
+  text-align: left;
+  background: var(--ed-card);
+  border: 1px solid var(--ed-line);
+  border-radius: 10px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.ed-shape:hover { background: var(--ed-card-hover); }
+.ed-shape.selected { border-color: var(--ed-gold); background: #262517; }
+.ed-shape-name { font-size: 14px; font-weight: 600; }
+.ed-shape.selected .ed-shape-name { color: var(--ed-gold); }
+.ed-shape-cols { font-size: 11px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+.ed-shape-total { font-size: 11px; color: var(--muted); }
+
+/* Tegelpalet */
+.ed-grow { flex: 1; }
+.ed-palette { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+.ed-swatch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px 8px;
+  background: var(--ed-card);
+  border: 1px solid var(--ed-line);
+  border-radius: 12px;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.ed-swatch:hover { background: var(--ed-card-hover); transform: translateY(-2px); }
+.ed-swatch:active { transform: scale(0.96); }
+
+.ed-swatch-img {
+  width: 76%;
+  aspect-ratio: 2 / 1.732;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.55));
+  transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.ed-swatch-img img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.ed-swatch:hover .ed-swatch-img { transform: scale(1.06) rotate(-2deg); }
+
+.ed-swatch-name { font-size: 12px; font-weight: 600; }
+.ed-swatch-key {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: 10px;
+  color: var(--muted);
+  font-family: ui-monospace, Consolas, monospace;
+}
+.ed-swatch-count {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #1a1a1a;
+  background: var(--ed-gold);
+  border-radius: 9px;
+}
+
+.ed-swatch.selected {
+  background: #262517;
+  border-color: var(--ed-gold);
+  box-shadow: 0 0 0 1px var(--ed-gold), 0 0 22px rgba(255, 209, 102, 0.28);
+}
+.ed-swatch.selected .ed-swatch-img {
+  transform: scale(1.1);
+  animation: ed-float 2.4s ease-in-out infinite;
+}
+.ed-swatch.selected .ed-swatch-name { color: var(--ed-gold); }
+
+@keyframes ed-float {
+  0%, 100% { transform: scale(1.1) translateY(0); }
+  50%      { transform: scale(1.1) translateY(-3px); }
+}
+
+/* Klik op het bord zonder gekozen tegel */
+.ed-palette.nudge .ed-swatch { animation: ed-nudge 0.6s ease; }
+.ed-palette.nudge .ed-swatch:nth-child(3n + 2) { animation-delay: 0.04s; }
+.ed-palette.nudge .ed-swatch:nth-child(3n) { animation-delay: 0.08s; }
+@keyframes ed-nudge {
+  0%, 100% { border-color: var(--ed-line); }
+  40%      { border-color: var(--ed-gold); transform: translateY(-3px); }
+}
+
+/* Acties */
+.ed-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ed-actions button {
+  padding: 9px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--ed-card);
+  border: 1px solid var(--ed-line);
+  border-radius: 9px;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.ed-actions button:hover { background: var(--ed-card-hover); border-color: #46564f; }
+.ed-actions button.armed { background: #e63946; border-color: #e63946; color: #fff; }
+
+.ed-back {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  text-align: center;
+  padding: 4px;
+}
+.ed-back:hover { color: var(--text); }
+
+.ed-tips {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--ed-line);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.ed-tips b { color: var(--text); font-weight: 600; }
+
+/* ---------- Bord ---------- */
+.ed-stage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--panel-w);
+}
+
+#ed-board {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Lege vakken: zacht lichtende contouren op het water */
+.ed-cell {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+body.ed-ready .ed-cell {
+  animation: ed-cell-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes ed-cell-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ed-slot {
+  fill: rgba(255, 255, 255, 0.045);
+  stroke: rgba(225, 240, 245, 0.42);
+  stroke-width: 0.028;
+  stroke-dasharray: 0.09 0.07;
+  stroke-linejoin: round;
+  transition: fill 0.2s, stroke 0.2s;
+  animation: ed-dash 6s linear infinite;
+}
+@keyframes ed-dash { to { stroke-dashoffset: -1.6; } }
+
+.ed-hit { fill: transparent; stroke: none; cursor: pointer; }
+.ed-cell.filled .ed-slot { opacity: 0; }
+
+/* Gelegde tegels */
+.ed-tile {
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.ed-tile.drop { animation: ed-drop 0.5s cubic-bezier(0.25, 1.5, 0.5, 1) both; }
+.ed-tile.swap { animation: ed-swap 0.35s ease both; }
+.ed-tile.lift { pointer-events: none; animation: ed-lift 0.35s ease-in forwards; }
+
+@keyframes ed-drop {
+  0%   { opacity: 0; transform: scale(1.35) translateY(-0.25px); filter: drop-shadow(0 0.4px 0.3px rgba(0, 0, 0, 0.6)) brightness(1.15); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)) brightness(1); }
+}
+@keyframes ed-swap {
+  0%   { transform: scale(0.92); filter: brightness(1.4); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+@keyframes ed-lift {
+  to { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+}
+
+/* Spooktegel: voorproefje op het lege vak */
+.ed-ghost {
+  pointer-events: none;
+  opacity: 0.55;
+  animation: ed-ghost 1.8s ease-in-out infinite;
+}
+@keyframes ed-ghost {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.7; }
+}
+
+/* Rand rond het aangewezen vak */
+.ed-hover {
+  pointer-events: none;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.75);
+  stroke-width: 0.035;
+  stroke-linejoin: round;
+}
+.ed-hover.place { stroke: var(--accent); stroke-width: 0.05; }
+.ed-hover.erase { stroke: #ff6b6b; stroke-width: 0.05; fill: rgba(255, 80, 80, 0.12); }
+
+/* Kringen bij leggen en weghalen */
+.ed-ripple {
+  pointer-events: none;
+  fill: none;
+  stroke-width: 0.06;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ed-ripple 0.7s ease-out forwards;
+}
+.ed-ripple.place { stroke: #fff3c4; }
+.ed-ripple.erase { stroke: rgba(255, 255, 255, 0.6); animation-duration: 0.5s; }
+@keyframes ed-ripple {
+  from { opacity: 0.9; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.35); stroke-width: 0.01; }
+}
+
+/* Melding: midden boven het bord */
+body.editor .toast {
+  left: calc(var(--panel-w) + (100vw - var(--panel-w)) / 2);
+  top: 22px;
+  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: #101614;
+}

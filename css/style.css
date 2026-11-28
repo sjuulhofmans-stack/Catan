@@ -68,6 +68,8 @@ button {
   transition: opacity 0.7s ease, visibility 0s linear 0.7s;
 }
 
+.screen.no-fade { transition: none; }
+
 #screen-menu { animation: fade-in 1.5s ease both; }
 
 .title {
@@ -313,13 +315,30 @@ h2 { margin: 0; font-size: 5vmin; font-weight: 600; }
 /* ---------- Bord ---------- */
 #table { transition-duration: 1s; }
 
-#board {
+#board, #tokens {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   display: block;
 }
+
+/* Bootjes: canvas onder het bord, boven de zee */
+#boats {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Havens: houten steiger, verschijnt na de tegels */
+.harbor { opacity: 0; }
+body.game-started .harbor { animation: fade-in 1.2s ease forwards 2.2s; }
+.pier { fill: #8a6236; stroke: #4e3519; stroke-width: 0.012; }
+.pier-post { fill: #5a3d1f; }
+.pier-plank { stroke: #5e4122; stroke-width: 0.006; }
 
 .tile {
   fill: var(--tile-fill);
@@ -480,12 +499,49 @@ body.game-started .player-panel { animation: fade-in 1.5s ease forwards 2.4s; }
 
 .side-menu button:hover { background: rgba(255, 255, 255, 0.14); border-color: var(--accent); }
 
+/* ---------- Nummerfiches ---------- */
+#tokens { pointer-events: none; }
+.token { opacity: 0; }
+.token-inner { transition: opacity 0.3s ease; }
+.token-inner.dimmed { opacity: 0.45; }
+body.game-started .token {
+  animation: fade-in 0.8s ease forwards;
+  animation-delay: calc(1.6s + var(--ring, 0) * 0.5s); /* na de tegel eronder */
+}
+.token-inner { transform-box: fill-box; transform-origin: center; }
+.token-shadow { fill: rgba(0, 0, 0, 0.38); }
+.token-disc { fill: #efe0bd; stroke: #6b4a26; stroke-width: 0.024; }
+.token-num {
+  fill: #2b2116;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  font-size: 0.27px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.token-num.hot { fill: #a3261c; font-size: 0.3px; }
+.token-pip { fill: #2b2116; }
+.token-pip.hot { fill: #a3261c; }
+
+/* ---------- Lichtlaag: dans + finale na een worp (js/glow.js) ---------- */
+#glow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
 /* ---------- 3D-dobbelstenen ---------- */
 .dice-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  transition: opacity 0.45s ease, filter 0.45s ease, transform 0.45s ease;
 }
+/* Wegvagen na de worp; daarna begint de dans */
+.dice-layer.vanish { opacity: 0; filter: blur(8px); transform: scale(1.04); }
 
 /* ---------- Testbord-knop (onderin het midden) ---------- */
 .test-controls {

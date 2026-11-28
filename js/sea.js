@@ -26,6 +26,7 @@ const Sea = (() => {
     uniform vec2  uTiles[${MAX_TILES}];
     uniform int   uTileCount;
     uniform float uBoundR;   // straal van een cirkel die het hele eiland omvat
+    uniform float uFarCut;   // buiten uBoundR + uFarCut: afstand benaderen (3 = snel; 8 = naadloos, ook bij een los eiland)
 
     // Hash zonder sin() (stabiel op alle GPU's)
     float hash12(vec2 p) {
@@ -59,14 +60,15 @@ const Sea = (() => {
     float height(vec2 p, float t) {
       float h = 0.0;
       // zeer trage, lange deining
-      h += 0.20 * sin(dot(p, vec2(0.86, 0.50)) * 2.0 + t * 0.55);
-      h += 0.12 * sin(dot(p, vec2(-0.40, 0.92)) * 2.8 + t * 0.70);
+      h += 0.24 * sin(dot(p, vec2(0.86, 0.50)) * 2.0 + t * 0.75);
+      h += 0.15 * sin(dot(p, vec2(-0.40, 0.92)) * 2.8 + t * 0.95);
+      h += 0.06 * sin(dot(p, vec2(0.97, -0.24)) * 5.5 + t * 1.30);
       // fijne oppervlaktestructuur die rustig verschuift
-      vec2 q = p * 3.0 + vec2(t * 0.045, t * 0.028);
+      vec2 q = p * 3.0 + vec2(t * 0.065, t * 0.040);
       float a = 0.3;
       for (int i = 0; i < 4; i++) {
         h += a * gnoise(q);
-        q = ROT * q + vec2(t * 0.055, -t * 0.035);
+        q = ROT * q + vec2(t * 0.080, -t * 0.050);
         a *= 0.5;
       }
       return h;
@@ -85,7 +87,7 @@ const Sea = (() => {
     float islandDist(vec2 bp) {
       // Ver van het eiland is de exacte afstand niet nodig (daar is het toch diep): scheelt veel rekenwerk
       float r = length(bp);
-      if (r > uBoundR + 3.0) return r - uBoundR;
+      if (r > uBoundR + uFarCut) return r - uBoundR;
       float d = 1e5;
       for (int i = 0; i < ${MAX_TILES}; i++) {
         if (i >= uTileCount) break;
@@ -112,7 +114,10 @@ const Sea = (() => {
       float h0 = height(bp, t);
       float hx = height(bp + vec2(e, 0.0), t);
       float hy = height(bp + vec2(0.0, e), t);
-      float strength = mix(0.04, 0.09, smoothstep(0.0, 2.0, depth));
+      float strength = mix(0.05, 0.11, smoothstep(0.0, 2.0, depth));
+      // Windvlagen: rimpelvelden die rustig over het water trekken (meer textuur waar het waait)
+      float gust = smoothstep(-0.25, 0.45, gnoise(bp * 0.32 + vec2(t * 0.045, t * 0.018)) + 0.4 * gnoise(bp * 0.8 - vec2(t * 0.03, 0.0)));
+      strength *= 0.75 + 0.7 * gust;
       vec3 n = normalize(vec3(-(hx - h0) / e * strength, -(hy - h0) / e * strength, 1.0));
 
       // Waterkleur naar diepte
@@ -128,7 +133,7 @@ const Sea = (() => {
       col = mix(col, vec3(0.50, 0.78, 0.70), (1.0 - smoothstep(0.0, 0.2, depth)) * 0.35 * uShore);
 
       // Grote vlekken (windvelden) die heel langzaam verschuiven
-      float patches = gnoise(bp * 0.22 + vec2(t * 0.009, t * 0.006)) + 0.5 * gnoise(bp * 0.5 - t * 0.011);
+      float patches = gnoise(bp * 0.22 + vec2(t * 0.016, t * 0.010)) + 0.5 * gnoise(bp * 0.5 - t * 0.02);
       col *= 0.92 + 0.3 * patches;
 
       // Licht
@@ -182,6 +187,7 @@ const Sea = (() => {
   const tileData = new Float32Array(MAX_TILES * 2);
   let tileCount = 0;
   let boundR = 0;
+  let farCut = 3;
   let renderScale = RENDER_SCALE;
   let perfFrames = 0, perfStart = 0, perfChecked = false;
   const startTime = performance.now();
@@ -214,7 +220,7 @@ const Sea = (() => {
       gl.enableVertexAttribArray(aPos);
       gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-      for (const name of ["uTime", "uRes", "uOrigin", "uScale", "uShore", "uTiles", "uTileCount", "uBoundR"]) {
+      for (const name of ["uTime", "uRes", "uOrigin", "uScale", "uShore", "uTiles", "uTileCount", "uBoundR", "uFarCut"]) {
         loc[name] = gl.getUniformLocation(program, name);
       }
     } catch (err) {
@@ -238,9 +244,12 @@ const Sea = (() => {
   }
 
   // Koppel de zee aan het bord, zodat de kust precies langs de tegels loopt
-  function setBoard(svg, model) {
+  // exactRange: hoe ver buiten het eiland de kustafstand exact wordt berekend. Het compacte spelbord
+  // kan met 3 (snel); de kaarteditor (los, verspreid eiland) gebruikt 8, anders zie je een cirkelnaad.
+  function setBoard(svg, model, { exactRange = 3 } = {}) {
     boardSvg = svg;
     boardModel = model;
+    farCut = exactRange;
     tileCount = Math.min(model.tiles.length, MAX_TILES);
     boundR = 0;
     model.tiles.slice(0, tileCount).forEach((t, i) => {
@@ -276,6 +285,7 @@ const Sea = (() => {
     gl.uniform2fv(loc.uTiles, tileData);
     gl.uniform1i(loc.uTileCount, tileCount);
     gl.uniform1f(loc.uBoundR, boundR);
+    gl.uniform1f(loc.uFarCut, farCut);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     checkPerformance(now);

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kaarteditor · De kolonisten van Gennep</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/style.css?v=23">
+  <link rel="stylesheet" href="css/editor.css?v=23">
+</head>
+<body class="editor">
+  <canvas id="sea" aria-hidden="true"></canvas>
+
+  <!-- Paneel links: bordvorm, tegels, acties -->
+  <aside id="ed-panel" class="ed-panel">
+    <header class="ed-head">
+      <p class="ed-kicker">De kolonisten van Gennep</p>
+      <h1 class="ed-title">Kaarteditor</h1>
+    </header>
+
+    <section class="ed-section">
+      <h2 class="ed-label">Bordvorm</h2>
+      <div id="ed-shapes" class="ed-shapes"></div>
+    </section>
+
+    <section class="ed-section ed-grow">
+      <div class="ed-label-row">
+        <h2 class="ed-label">Tegels</h2>
+        <span id="ed-count" class="ed-count"></span>
+      </div>
+      <div id="ed-palette" class="ed-palette"></div>
+    </section>
+
+    <section class="ed-section">
+      <div class="ed-actions">
+        <button id="ed-clear" type="button">Leegmaken</button>
+        <button id="ed-export" type="button">Exporteren</button>
+        <button id="ed-import" type="button">Importeren</button>
+        <button id="ed-fullscreen" type="button" class="btn-fullscreen">Fullscreen</button>
+      </div>
+      <a class="ed-back" href="index.html">← Terug naar het spel</a>
+      <input id="ed-file" type="file" accept="application/json,.json" hidden>
+    </section>
+
+    <p class="ed-tips">
+      <b>Klik</b> leg tegel · <b>klik</b> op tegel haalt weg<br>
+      <b>Slepen</b> meerdere tegels · <b>scroll</b> andere variant<br>
+      <b>1–9</b> kies tegel · <b>Esc</b> loslaten · <b>F</b> fullscreen
+    </p>
+  </aside>
+
+  <main class="ed-stage">
+    <svg id="ed-board" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/hex.js?v=23"></script>
+  <script src="js/sea.js?v=23"></script>
+  <script src="js/editor.js?v=23"></script>
+</body>
+</html>

@@ -15,6 +15,7 @@ window.board = model; // handig om in de console te bekijken
 // Zee-achtergrond, met de kust langs de tegels
 Sea.init($("sea"));
 Sea.setBoard($("board"), model);
+Boats.init($("boats"), $("board"), model);
 
 // ---------- Spelinstellingen ----------
 let gameConfig = null;
@@ -46,8 +47,12 @@ function applyConfig(config) {
 // ---------- Schermen ----------
 const screens = { menu: $("screen-menu"), settings: $("screen-settings"), lobby: $("screen-lobby") };
 
-function showScreen(name) {
-  for (const [key, el] of Object.entries(screens)) el.classList.toggle("hidden", key !== name);
+// Wisselen tussen menuschermen gaat direct; alleen naar het spel (name = null) fadet het uit.
+function showScreen(name, fade = false) {
+  for (const [key, el] of Object.entries(screens)) {
+    el.classList.toggle("no-fade", !fade);
+    el.classList.toggle("hidden", key !== name);
+  }
 }
 
 // ---------- Spel starten ----------
@@ -62,12 +67,13 @@ function startGame() {
   resetTurns();
   Lobby.markStarted();
   broadcastState();
-  showScreen(null); // menu/lobby faden uit
+  showScreen(null, true); // menu/lobby faden uit
   setTimeout(() => {
     $("table").classList.remove("hidden");
     document.body.classList.add("game-started"); // start de tegel-animaties
     Sea.resize();
     Sea.setShore(true); // ondiep water + branding rond het eiland
+    Boats.start();      // bootjes varen af en aan naar de havens
   }, 800);
 }
 
@@ -83,6 +89,7 @@ function openSettings(phones) {
 
 $("btn-new").addEventListener("click", () => openSettings(true));
 $("btn-solo").addEventListener("click", () => openSettings(false));
+$("btn-editor").addEventListener("click", () => { location.href = "editor.html"; });
 
 // ---------- Instellingen ----------
 Settings.mount();
@@ -437,11 +444,12 @@ function goToMainMenu() {
   resetTurns();
   Sea.setShore(false);
   diceRoller?.hide();
+  setTimeout(() => { if (!gameStarted) Boats.stop(); }, 1000); // na het uitfaden van het bord
   Lobby.close();
   $("table").classList.add("hidden");
   setTimeout(() => {
     document.body.classList.remove("game-started", "show-debug"); // zodat de fade-in volgende keer opnieuw speelt
-    showScreen("menu");
+    showScreen("menu", true);
   }, 1000);
 }
 
